@@ -1,73 +1,114 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
-
-
-import torch.nn as nn 
-class SIANNorm (nn.Module):
-    def __init__(self, in_c):
+class SIANNorm(nn.Module):
+    def __init__(self):
         super(SIANNorm, self).__init__()
-        
-        #layer 1
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3)
-        self.conv2 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3)
 
-        #layer 2
+        # Semantization
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3, padding=1)
+
+        # Stylization
         self.conv3 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
-
-        # layer 3
+        # Instantiation
         self.layout_proj1 = nn.Conv2d(3, 128, kernel_size=1)
         self.layout_proj2 = nn.Conv2d(1, 128, kernel_size=1)
-
         self.conv5 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv6 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
-        # layer 4
-        self.conv7 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
-        self.conv8 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
-        self.conv9 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
-        self.conv10 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+        # Modulation
+        self.conv7 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)  # gamma_i
+        self.conv8 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)  # gamma_j
+        self.conv9 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)  # beta_i
+        self.conv10 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1) # beta_j
 
         self.batch_norm = nn.InstanceNorm2d(128, affine=False)
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
-        # semanitzation
+        # Semantization
         p_feature = self.conv1(semantic_map)
         q_feature = self.conv2(semantic_map)
-        
-        #Stylzation
 
-        style_matrix = style_vector.view(P_feature.size)
-        p_feature= self.conv3(style_matrix * p_feature)
+        # Stylization
+        style_matrix = style_vector.view(style_vector.size(0), style_vector.size(1), 1, 1)
+        p_feature = self.conv3(style_matrix * p_feature)
+        q_feature = self.conv4(style_matrix * q_feature)
 
-        q_feature = self.conv4(style_matrix * p_feature)
+        # Instantiation
+        p_dir = self.layout_proj1(directional_map)
+        p_feature = self.conv5(p_feature * p_dir)
 
-        #Instantiation
-
-        p = self.layout_proj1(directional_map)
-        P_feature = self.conv5(P_feature * p)
-        
-        q = self.layout_proj2(distance_map)
-        q_feature = self.conv6(q_feature * q)
+        q_dis = self.layout_proj2(distance_map)
+        q_feature = self.conv6(q_feature * q_dis)
 
         # Modulation
-
         gamma_i = self.conv7(p_feature)
-        beta_i = self.conv9(p_feature)
-
         gamma_j = self.conv8(q_feature)
+        beta_i = self.conv9(p_feature)
         beta_j = self.conv10(q_feature)
-
 
         gamma = gamma_i + gamma_j
         beta = beta_i + beta_j
 
+        # Normalize and modulate
         x_norm = self.batch_norm(input)
-
         out = gamma * x_norm + beta
         return out
 
 
 
-class SIANResBik(nn.Module):
-    pass 
+
+class SIANResBlk(nn.Module):
+    def __init__(self, in_channels, out_channels, 
+                 semantic_nc, style_dim, 
+                 directional_nc, distance_nc,
+                 upsample=True):
+        super().__init__()
+        
+        self.upsample = upsample
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        
+        # 2 SIAN blocks
+        self.sian1 = SIANNorm(in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        
+        self.sian2 = SIANNorm(out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        
+        # Skip connection
+        self.sian_skip = SIANNorm(in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv_skip = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
+        
+        self.relu = nn.ReLU(inplace=True)
+    
+    def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
+        # Up sample input if needed
+        if self.upsample:
+            x = F.interpolate(x, scale_factor=2, mode='nearest')
+            
+            # Downsample semantic and instance maps to current feature size
+            target_size = x.shape[2:]
+            semantic_map = F.interpolate(semantic_map, size=target_size, mode='nearest')
+            directional_map = F.interpolate(directional_map, size=target_size, mode='nearest')
+            distance_map = F.interpolate(distance_map, size=target_size, mode='nearest')
+        
+        # Residual path
+        out = self.sian1(x, semantic_map, style_vector, directional_map, distance_map)
+        out = self.relu(out)
+        out = self.conv1(out)
+        
+        out = self.sian2(out, semantic_map, style_vector, directional_map, distance_map)
+        out = self.relu(out)
+        out = self.conv2(out)
+        
+        # Skip connection path
+        skip = self.sian_skip(x, semantic_map, style_vector, directional_map, distance_map)
+        skip = self.relu(skip)
+        skip = self.conv_skip(skip)
+        
+        return out + skip
