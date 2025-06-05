@@ -70,6 +70,8 @@ class MaskProcessorModel(pl.LightningModule):
         # Chỉ demo, không có loss thực sự
         loss = torch.tensor(0.0, requires_grad=True)
         return loss
+    def configure_optimizers(self):
+        return []
 
 # Demo sử dụng
 if __name__ == "__main__":

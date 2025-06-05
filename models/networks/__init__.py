@@ -9,7 +9,7 @@ from models.networks.loss import *
 from models.networks.discriminator import *
 from models.networks.generator import *
 from models.networks.encoder import *
-import util.util as util
+import utils.util as util
 
 
 def find_network_using_name(target_network_name, filename):
