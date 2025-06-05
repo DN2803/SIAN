@@ -1,7 +1,7 @@
 from data.pix2pix_dataset import Pix2pixDataset
 from data.image_folder import make_dataset
 
-
+#TODO: dataloader 
 class CleavageEmbryovDataset(Pix2pixDataset):
     """ Dataset that loads images from directories
         Use option --label_dir, --image_dir, --instance_dir to specify the directories.

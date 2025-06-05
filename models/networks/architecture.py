@@ -70,7 +70,7 @@ class SIANResBlk(nn.Module):
                  upsample=True):
         super().__init__()
         
-        self.upsample = upsample
+        
         self.in_channels = in_channels
         self.out_channels = out_channels
         
@@ -86,18 +86,12 @@ class SIANResBlk(nn.Module):
         self.conv_skip = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
         
         self.relu = nn.ReLU(inplace=True)
+
+        #TODO: check upsampling block after each SIAN ResBik
+        self.upsample = upsample
     
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
-        # Up sample input if needed
-        if self.upsample:
-            x = F.interpolate(x, scale_factor=2, mode='nearest')
-            
-            # Downsample semantic and instance maps to current feature size
-            target_size = x.shape[2:]
-            semantic_map = F.interpolate(semantic_map, size=target_size, mode='nearest')
-            directional_map = F.interpolate(directional_map, size=target_size, mode='nearest')
-            distance_map = F.interpolate(distance_map, size=target_size, mode='nearest')
-        
+       
         # Residual path
         out = self.sian1(x, semantic_map, style_vector, directional_map, distance_map)
         out = self.relu(out)
@@ -111,9 +105,9 @@ class SIANResBlk(nn.Module):
         skip = self.sian_skip(x, semantic_map, style_vector, directional_map, distance_map)
         skip = self.relu(skip)
         skip = self.conv_skip(skip)
-        
-        return out + skip
-
+        out =  out + skip 
+        out = self.upsample(out)
+        return out
 # VGG architecter, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):
     def __init__(self, requires_grad=False):

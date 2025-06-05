@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn 
 from torch.utils.data import Dataset, DataLoader
 import pytorch_lightning as pl
 import numpy as np
@@ -42,7 +43,7 @@ def generate_semantic_direction_distance(instance_mask_np):
 
     return semantic_mask, direction_map, distance_map
 
-class MaskProcessorModel(pl.LightningModule):
+class MaskProcessorModel(nn.Module):
     def __init__(self):
         super().__init__()
         # Không cần layers vì chỉ demo phần tiền xử lý
@@ -58,22 +59,8 @@ class MaskProcessorModel(pl.LightningModule):
         distance_map = torch.tensor(distance_map, dtype=torch.float32, device=instance_mask.device)
         return semantic_mask, direction_map, distance_map
 
-    def training_step(self, batch, batch_idx):
-        instance_mask = batch  # batch chứa instance_mask
-        semantic_mask, direction_map, distance_map = self.forward(instance_mask)
-
-        # Ví dụ: in shape output
-        self.log("semantic_mask_mean", semantic_mask.mean())
-        self.log("direction_map_mean", direction_map.mean())
-        self.log("distance_map_mean", distance_map.mean())
-
-        # Chỉ demo, không có loss thực sự
-        loss = torch.tensor(0.0, requires_grad=True)
-        return loss
-    def configure_optimizers(self):
-        return []
-
-# Demo sử dụng
+    
+   # Demo sử dụng
 if __name__ == "__main__":
     # Giả sử có 2 ảnh instance_mask 100x100, 2 object label
     instance_masks = [
@@ -86,10 +73,11 @@ if __name__ == "__main__":
     instance_masks[1][20:40, 20:40] = 1
     instance_masks[1][50:70, 50:70] = 2
 
-    dataset = InstanceMaskDataset(instance_masks)
-    dataloader = DataLoader(dataset, batch_size=1)
+    processer = MaskProcessorModel()
+    instance_masks_tensor = [torch.tensor(mask, dtype = torch.int32) for mask in instance_masks]
+    for instance_mask in instance_masks_tensor:
+        p, q, s = processer(instance_mask)
+        print (p)
 
-    model = MaskProcessorModel()
+    
 
-    trainer = pl.Trainer(max_epochs=1, log_every_n_steps=1)
-    trainer.fit(model, dataloader)
