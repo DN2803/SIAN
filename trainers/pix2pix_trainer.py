@@ -54,7 +54,7 @@ class Pix2PixTrainer():
         return self.generated
 
     def update_learning_rate(self, epoch):
-        self.update_learning_rate(epoch)
+        self.__update_learning_rate(epoch)
 
     def save(self, epoch):
         self.pix2pix_model_on_one_gpu.save(epoch)
@@ -63,7 +63,7 @@ class Pix2PixTrainer():
     # Helper functions
     ##################################################################
 
-    def update_learning_rate(self, epoch):
+    def __update_learning_rate(self, epoch):
         if epoch > self.opt.niter:
             lrd = self.opt.lr / self.opt.niter_decay
             new_lr = self.old_lr - lrd

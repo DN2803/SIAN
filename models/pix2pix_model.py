@@ -29,6 +29,7 @@ class Pix2PixModel(torch.nn.Module):
             self.criterionGAN = networks.GANLoss(
                 opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
             self.criterionFeat = torch.nn.L1Loss()
+            self.criterionSIAN = networks.SIANLoss(opt)
             if not opt.no_vgg_loss:
                 self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
             if opt.use_vae:
@@ -131,43 +132,46 @@ class Pix2PixModel(torch.nn.Module):
 
     def compute_generator_loss(self, input_semantics, real_image):
         G_losses = {}
-
-        fake_image, KLD_loss = self.generate_fake(
-            input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
-
+        # Tạo ảnh giả và mã hóa z nếu cần
+        fake_image, mu, logvar = None, None, None
         if self.opt.use_vae:
-            G_losses['KLD'] = KLD_loss
+            z, mu, logvar = self.encode_z(real_image)
+            fake_image = self.netG(input_semantics, z=z)
+        else:
+            fake_image = self.netG(input_semantics)
+        # fake_image, KLD_loss = self.generate_fake(
+        #     input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
 
-        pred_fake, pred_real = self.discriminate(
-            input_semantics, fake_image, real_image)
+        # if self.opt.use_vae:
+        #     G_losses['KLD'] = KLD_loss
 
-        G_losses['GAN'] = self.criterionGAN(pred_fake, True,
-                                            for_discriminator=False)
+        pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
 
-        if not self.opt.no_ganFeat_loss:
-            num_D = len(pred_fake)
-            GAN_Feat_loss = self.FloatTensor(1).fill_(0)
-            for i in range(num_D):  # for each discriminator
-                # last output is the final prediction, so we exclude it
-                num_intermediate_outputs = len(pred_fake[i]) - 1
-                for j in range(num_intermediate_outputs):  # for each layer output
-                    unweighted_loss = self.criterionFeat(
-                        pred_fake[i][j], pred_real[i][j].detach())
-                    GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
-            G_losses['GAN_Feat'] = GAN_Feat_loss
+        # Style vector (giả sử được trích xuất từ G)
+        style_real = self.netG.extract_style(real_image)  # hoặc một hàm style encoder riêng
+        style_fake = self.netG.extract_style(fake_image)
 
-        if not self.opt.no_vgg_loss:
-            G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
-                * self.opt.lambda_vgg
+        # Mask instance map (để tính patch loss)
+        mask = self.get_instance_mask()  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
+
+        # compute SIAN loss
+        total_loss, loss_dict = self.sian_loss(
+            pred_fake, pred_real, real_image, fake_image,
+            mu, logvar, style_real, style_fake, mask
+        )
+
+        G_losses.update(loss_dict)
+        G_losses['Total'] = total_loss
 
         return G_losses, fake_image
+
 
     def compute_discriminator_loss(self, input_semantics, real_image):
         D_losses = {}
         with torch.no_grad():
             fake_image, _ = self.generate_fake(input_semantics, real_image)
             fake_image = fake_image.detach()
-            fake_image.requires_grad_()
+            # fake_image.requires_grad_()
 
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image, real_image)
@@ -185,20 +189,12 @@ class Pix2PixModel(torch.nn.Module):
         return z, mu, logvar
 
     def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
-        z = None
-        KLD_loss = None
+        z, mu, logvar = None, None, None
         if self.opt.use_vae:
             z, mu, logvar = self.encode_z(real_image)
-            if compute_kld_loss:
-                KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
-
         fake_image = self.netG(input_semantics, z=z)
-
-        assert (not compute_kld_loss) or self.opt.use_vae, \
-            "You cannot compute KLD loss if opt.use_vae == False"
-
-        return fake_image, KLD_loss
-
+        return fake_image, mu, logvar
+    
     # Given fake and real image, return the prediction of discriminator
     # for each fake and real image.
 
@@ -249,3 +245,4 @@ class Pix2PixModel(torch.nn.Module):
 
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0
+    

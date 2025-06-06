@@ -275,3 +275,34 @@ class Colorize(object):
             color_image[2][mask] = self.cmap[label][2]
 
         return color_image
+    
+def extract_instance_patches(img, mask, patch_size=64):
+    """
+    img: BxCxHxW tensor ảnh RGB
+    mask: Bx1xHxW tensor chứa instance ID (ví dụ: 0 background, 1,2,... là từng nhân)
+    Trả về: list các patch từ ảnh gốc, cắt theo từng instance
+    """
+    patches = []
+    batch_size = img.size(0)
+    for b in range(batch_size):
+        unique_ids = mask[b].unique()
+        for inst_id in unique_ids:
+            if inst_id == 0:
+                continue  # bỏ background
+            coords = (mask[b, 0] == inst_id).nonzero(as_tuple=False)
+            y_min, x_min = coords.min(0)[0]
+            y_max, x_max = coords.max(0)[0]
+            # Tính bounding box, thêm padding
+            y_center = (y_min + y_max) // 2
+            x_center = (x_min + x_max) // 2
+            y1 = max(y_center - patch_size//2, 0)
+            y2 = min(y1 + patch_size, img.size(2))
+            x1 = max(x_center - patch_size//2, 0)
+            x2 = min(x1 + patch_size, img.size(3))
+            patch = img[b:b+1, :, y1:y2, x1:x2]
+            if patch.shape[2] == patch_size and patch.shape[3] == patch_size:
+                patches.append(patch)
+    if len(patches) > 0:
+        return torch.cat(patches, dim=0)
+    else:
+        return None

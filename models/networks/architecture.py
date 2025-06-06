@@ -87,7 +87,6 @@ class SIANResBlk(nn.Module):
         
         self.relu = nn.ReLU(inplace=True)
 
-        #TODO: check upsampling block after each SIAN ResBik
         self.upsample = upsample
     
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
@@ -106,7 +105,8 @@ class SIANResBlk(nn.Module):
         skip = self.relu(skip)
         skip = self.conv_skip(skip)
         out =  out + skip 
-        out = self.upsample(out)
+        if self.upsample:
+            out = F.interpolate(out, scale_factor=2, mode='nearest')
         return out
 # VGG architecter, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):

@@ -13,9 +13,7 @@ class SIANGenerator(BaseNetwork):
         parser.add_argument('--num_upsampling_layers',
                             choices=('normal', 'more', 'most'), default='normal',
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
-        parser.add_argument('--num_blocks', default=7,
-                            help="Num of SIANResBlk block")
-        
+        parser.add_argument('--num_blocks', type=int, default=7, help="Num of SIANResBlk blocks")        
         return parser
 
     def __init__(self, opt):
@@ -54,12 +52,18 @@ class SIANGenerator(BaseNetwork):
         # Conv cuối để ra ảnh RGB 3 channel
         self.final_conv = nn.Conv2d(channels[-1], 3, kernel_size=3, padding=1)
     
-    def forward(self, x):
-        style_vector = self.encoder(x)
-        semantic_map, directional_map, distance_map = self.mask_generator(x)
-        out = self.initial_conv(style_vector)
+    def forward(self, input_semantics, real_image=None, z=None):
+        # Nếu z (style latent) không được truyền vào, tự sinh từ real_image
+        if z is None and real_image is not None:
+            z = self.encoder(real_image)
+        
+        semantic_map, directional_map, distance_map = self.mask_generator(input_semantics)
+
+        out = self.initial_conv(input_semantics)
         for block in self.blocks:
-            out = block(out, semantic_map, style_vector, directional_map, distance_map)
+            out = block(out, semantic_map, z, directional_map, distance_map)
+
         out = self.final_conv(out)
-        out = torch.tanh(out)
-        return out
+        return torch.tanh(out)
+    def extract_style(self, real_image):
+        return self.encoder(real_image)

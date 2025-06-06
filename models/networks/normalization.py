@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.utils.spectral_norm as spectral_norm
+from models.networks.sync_batchnorm import SynchronizedBatchNorm2d
 
 def get_nonspade_norm_layer(opt, norm_type='instance'):
     # helper function to get # output channels of the previous layer
@@ -26,8 +27,8 @@ def get_nonspade_norm_layer(opt, norm_type='instance'):
 
         if subnorm_type == 'batch':
             norm_layer = nn.BatchNorm2d(get_out_channel(layer), affine=True)
-        # elif subnorm_type == 'sync_batch':
-        #     norm_layer = SynchronizedBatchNorm2d(get_out_channel(layer), affine=True)
+        elif subnorm_type == 'sync_batch':
+            norm_layer = SynchronizedBatchNorm2d(get_out_channel(layer), affine=True)
         elif subnorm_type == 'instance':
             norm_layer = nn.InstanceNorm2d(get_out_channel(layer), affine=False)
         else:
