@@ -21,9 +21,10 @@ class InstanceMaskDataset(Dataset):
 
 def generate_semantic_direction_distance(instance_mask_np):
     semantic_mask = (instance_mask_np > 0).astype(np.float32)
-
+    distance_map = np.zeros(instance_mask_np.shape, dtype=np.float32)
     direction_map = np.zeros((2, *instance_mask_np.shape), dtype=np.float32)
     props = regionprops(instance_mask_np)
+
     for region in props:
         coords = region.coords
         centroid = np.array(region.centroid)
@@ -33,7 +34,22 @@ def generate_semantic_direction_distance(instance_mask_np):
         for i, (y, x) in enumerate(coords):
             direction_map[0, y, x] = unit_vectors[i, 0]
             direction_map[1, y, x] = unit_vectors[i, 1]
+            distance_map[y, x] = norms[i][0]
 
+    dy = direction_map[0]
+    dx = direction_map[1]
+    angles = np.arctan2(dy, dx)  # (-pi, pi)
+    angles_deg = (np.degrees(angles) + 360) % 360  # (0, 360)
+    direction_bin = np.floor(angles_deg / 45).astype(np.uint8) + 1  # 1–8
+
+    # Bước 3: Chia 2 khoảng cách (near/far)
+    norm_dist = distance_map / (np.max(distance_map) + 1e-6)
+    distance_bin = np.where(norm_dist < 0.5, 0, 1)  # 0: near, 1: far
+
+    # Bước 4: Gộp thành 16 lớp
+    direction_distance_bin = direction_bin + distance_bin * 8  # 1–16
+
+    # Distance to skeleton
     distance_map = np.zeros(instance_mask_np.shape, dtype=np.float32)
     for region in props:
         nucleus_mask = (instance_mask_np == region.label).astype(np.uint8)
@@ -41,7 +57,9 @@ def generate_semantic_direction_distance(instance_mask_np):
         dist_to_skeleton = distance_transform_edt(~skeleton & nucleus_mask)
         distance_map[nucleus_mask > 0] = dist_to_skeleton[nucleus_mask > 0]
 
-    return semantic_mask, direction_map, distance_map
+
+    
+    return semantic_mask, direction_distance_bin, distance_map
 
 class MaskProcessorModel(nn.Module):
     def __init__(self):

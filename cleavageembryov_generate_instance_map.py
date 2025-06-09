@@ -2,13 +2,16 @@ import os
 import argparse
 import numpy as np
 import skimage.io as io
-from skimage.draw import polygon, polygon_perimeter
+from skimage.draw import polygon
+import torch
 from pycocotools.coco import COCO
+
+from models.networks.mask_generator import MaskProcessorModel
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--annotation_file', type=str,
                     default="C:/Users/Fujinet/Documents/ws/CleavageEmbryov1.1/CleavageEmbryov1.1/annotations/instances_train.json")
-parser.add_argument('--output_dir', type=str, default="./cleavageembryov/train_inst/")
+parser.add_argument('--output_dir', type=str, default="./datasets/cleavageembryov/train_inst/")
 parser.add_argument('--state', type=str, default='train')
 opt = parser.parse_args()
 
@@ -21,7 +24,8 @@ output_instance_dir = os.path.join(opt.output_dir, f"{opt.state}_inst")
 output_contour_dir = os.path.join(opt.output_dir, f"{opt.state}_contour")
 os.makedirs(output_instance_dir)
 coco = COCO(opt.annotation_file)
-
+# Tạo model
+processor = MaskProcessorModel()
 # Lấy ID của 'fragment'
 
 fragment_cat_id = 2
@@ -36,14 +40,16 @@ for ix, id in enumerate(imgIds):
     h, w = img_info["height"], img_info["width"]
     inst_path = os.path.join(output_instance_dir, filename)
     
-    inst_img = np.zeros((h, w), dtype=np.uint8)
+    inst_img = np.zeros((h, w), dtype=np.int32)
     label_img = np.zeros((h, w), dtype=np.uint8)
 
     annIds = coco.getAnnIds(imgIds=id, catIds=[], iscrowd=None)
     anns = [ann for ann in coco.loadAnns(annIds)
             if fragment_cat_id is None or ann["category_id"] != fragment_cat_id]
 
-
+    semantic_masks = torch.zeros((h, w), dtype=torch.float32)
+    direction_maps = torch.zeros((h, w), dtype=torch.float32)
+    distance_maps = torch.zeros((h, w), dtype=torch.float32)
     count = 1
     for ann in anns:
         if isinstance(ann["segmentation"], list):
@@ -51,10 +57,26 @@ for ix, id in enumerate(imgIds):
                 poly = np.array(seg).reshape((int(len(seg) / 2), 2))
                 rr, cc = polygon(poly[:, 1] - 1, poly[:, 0] - 1)
                 inst_img[rr, cc] = 255
-                # Thêm contour
-                rr_contour, cc_contour = polygon_perimeter(poly[:, 1] - 1, poly[:, 0] - 1, shape=inst_img.shape)
-                inst_img[rr_contour, cc_contour] = 128
+                mask_tensor = torch.tensor(inst_img, dtype=torch.int32)
+
+                semantic_mask, direction_map, distance_map = processor(mask_tensor)
+
+                semantic_masks += semantic_mask.squeeze(0)
+                direction_maps += direction_map.squeeze(0)
+                distance_maps += distance_map.squeeze(0)
             count += 1
 
 
     io.imsave(inst_path, inst_img.astype(np.uint8))
+    # Đường dẫn để lưu các file .npy
+    base_name = os.path.splitext(os.path.basename(inst_path))[0]
+    semantic_path = os.path.join(opt.output_dir, f"{base_name}_semantic.npy")
+    direction_path = os.path.join(opt.output_dir, f"{base_name}_direction.npy")
+    distance_path = os.path.join(opt.output_dir, f"{base_name}_distance.npy")
+
+    # Chuyển sang NumPy và lưu
+    np.save(semantic_path, semantic_masks.cpu().numpy())
+    np.save(direction_path, direction_maps.cpu().numpy())
+    np.save(distance_path, distance_maps.cpu().numpy())
+
+
