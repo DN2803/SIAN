@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+from data.base_dataset import BaseDataset, get_params, get_transform
 
 class CleavageEmbryovDataset(Pix2pixDataset):
     """
@@ -54,13 +55,22 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         semantic_map = torch.from_numpy(np.load(semantic_path)).float()
         distance_map = torch.from_numpy(np.load(distance_path)).float()
         direction_map = torch.from_numpy(np.load(direction_path)).float()
+         # input image (real images)
+        image_path = self.image_paths[index]
+        params = get_params(self.opt)
+        
+        image = Image.open(image_path)
+        image = image.convert('RGB')
+        transform_image = get_transform(self.opt, params)
+        image_tensor = transform_image(image)
 
         return {
             'label': instance_tensor,
-            'inst': instance_tensor,  # bạn có thể sửa nếu cần dùng riêng inst
-            'semantic': semantic_map,
-            'distance': distance_map,
-            'direction': direction_map,
+            'instance': instance_tensor,  # bạn có thể sửa nếu cần dùng riêng inst
+            'semantic_map': semantic_map,
+            'distance_map': distance_map,
+            'direction_map': direction_map,
+            'image' : image_tensor,
             'path': image_path
         }
 
