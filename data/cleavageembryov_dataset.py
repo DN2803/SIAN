@@ -4,6 +4,7 @@ import os
 from PIL import Image
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 class CleavageEmbryovDataset(Pix2pixDataset):
     """
@@ -41,7 +42,8 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         instance_img = Image.open(inst_path).convert('L')
         if self.opt.load_size > 0:
             instance_img = instance_img.resize((self.opt.load_size, self.opt.load_size))
-        instance_tensor = self.transform(instance_img)
+        to_tensor = transforms.ToTensor()
+        instance_tensor = to_tensor(instance_img)
 
         # Load các bản đồ phụ trợ (semantic, direction, distance)
         semantic_path = os.path.join(self.semantic_dir, f'{inst_name}.npy')
