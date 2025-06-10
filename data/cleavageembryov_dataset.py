@@ -70,7 +70,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
             'instance': instance_tensor,  # bạn có thể sửa nếu cần dùng riêng inst
             'semantic_map': semantic_map,
             'distance_map': distance_map,
-            'direction_map': direction_map,
+            'directional_map': direction_map,
             'image' : image_tensor,
             'path': image_path
         }
