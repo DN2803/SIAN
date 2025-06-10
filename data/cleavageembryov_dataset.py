@@ -64,6 +64,10 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         image = image.convert('RGB')
         transform_image = get_transform(self.opt, params)
         image_tensor = transform_image(image)
+        print("instance_tensor dtype:", instance_tensor.dtype)
+        print("instance_tensor min/max:", instance_tensor.min(), instance_tensor.max())
+        print("instance_tensor shape:", instance_tensor.shape)
+
 
         return {
             'label': instance_tensor,
