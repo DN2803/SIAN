@@ -24,9 +24,8 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         parser.set_defaults(display_winsize=256)
         return parser
 
-    def __init__(self, opt):
+    def initialize(self, opt):
         # Khởi tạo Pix2pixDataset đúng cách với đối số opt
-        super().__init__()
         self.opt = opt
 
         # Lấy tất cả các đường dẫn đến các dữ liệu
