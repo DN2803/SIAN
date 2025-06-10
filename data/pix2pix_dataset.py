@@ -39,14 +39,14 @@ class Pix2pixDataset(BaseDataset):
         self.image_paths = image_paths
         self.instance_paths = instance_paths
 
-        size = len(self.label_paths)
+        size = len(self.instance_paths)
         self.dataset_size = size
 
     def get_paths(self, opt):
         label_paths = []
         image_paths = []
         instance_paths = []
-        # assert False, "A subclass of Pix2pixDataset must override self.get_paths(self, opt)"
+        assert False, "A subclass of Pix2pixDataset must override self.get_paths(self, opt)"
         return label_paths, image_paths, instance_paths
 
     def paths_match(self, path1, path2):
