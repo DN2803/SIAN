@@ -12,6 +12,7 @@ class SIANNorm(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=semantic_nc, out_channels=128, kernel_size=3, padding=1)
 
         # Stylization
+        self.style_proj = nn.Linear(style_dim, 128)
         self.conv3 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
@@ -27,7 +28,7 @@ class SIANNorm(nn.Module):
         self.conv9 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)  # beta_i
         self.conv10 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1) # beta_j
 
-        self.batch_norm = nn.InstanceNorm2d(style_dim, affine=False)
+        self.batch_norm = nn.InstanceNorm2d(in_channels, affine=False)
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
         # Semantization
@@ -35,7 +36,8 @@ class SIANNorm(nn.Module):
         q_feature = self.conv2(semantic_map)
 
         # Stylization
-        style_matrix = style_vector.view(style_vector.size(0), style_vector.size(1), 1, 1)
+        B = style_vector.size(0)
+        style_matrix = self.style_proj(style_vector).view(B, 128, 1, 1)
         p_feature = self.conv3(style_matrix * p_feature)
         q_feature = self.conv4(style_matrix * q_feature)
 
