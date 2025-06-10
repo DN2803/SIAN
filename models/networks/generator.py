@@ -70,7 +70,7 @@ class SIANGenerator(BaseNetwork):
         out = self.initial_conv(input)
         print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
-            out = block(out, semantic_map, z, directional_map, distance_map)
+            out, semantic_map, directional_map, distance_map = block(out, semantic_map, z, directional_map, distance_map)
 
         out = self.final_conv(out)
         return torch.tanh(out)

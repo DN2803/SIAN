@@ -95,6 +95,7 @@ class SIANResBlk(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
         self.upsample = upsample
+
     
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
        
@@ -114,8 +115,14 @@ class SIANResBlk(nn.Module):
         out =  out + skip 
         if self.upsample:
             out = F.interpolate(out, scale_factor=2, mode='nearest')
+            semantic_map = F.interpolate(semantic_map, scale_factor=2, mode='nearest')
+            directional_map = F.interpolate(directional_map, scale_factor=2, mode='nearest')
+            distance_map = F.interpolate(distance_map, scale_factor=2, mode='nearest')
+
         print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
-        return out
+        return out, semantic_map, directional_map, distance_map
+    
+    
 # VGG architecter, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):
     def __init__(self, requires_grad=False):
