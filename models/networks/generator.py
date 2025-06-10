@@ -13,7 +13,8 @@ class SIANGenerator(BaseNetwork):
         parser.add_argument('--num_upsampling_layers',
                             choices=('normal', 'more', 'most'), default='normal',
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
-        parser.add_argument('--num_blocks', type=int, default=7, help="Num of SIANResBlk blocks")        
+        parser.add_argument('--num_blocks', type=int, default=7, help="Num of SIANResBlk blocks") 
+        parser.add_argument('--base_channels', type=int, default=128, help="The starting number of feature channels")       
         return parser
 
     def __init__(self, opt):
