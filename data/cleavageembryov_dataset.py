@@ -22,7 +22,8 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         return parser
 
     def __init__(self, opt):
-        super().__init__(opt)
+        super().__init__()
+        self.opt = opt
         self.root = opt.dataroot
         phase = 'val' if opt.phase == 'test' else opt.phase
         self.instance_dir = os.path.join(self.root, f'{phase}_inst')
