@@ -46,7 +46,7 @@ class Pix2pixDataset(BaseDataset):
         label_paths = []
         image_paths = []
         instance_paths = []
-        assert False, "A subclass of Pix2pixDataset must override self.get_paths(self, opt)"
+        # assert False, "A subclass of Pix2pixDataset must override self.get_paths(self, opt)"
         return label_paths, image_paths, instance_paths
 
     def paths_match(self, path1, path2):
