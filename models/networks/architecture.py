@@ -4,20 +4,20 @@ import torch.nn.functional as F
 import torchvision
 
 class SIANNorm(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels, semantic_nc, style_dim, directional_nc, distance_nc):
         super(SIANNorm, self).__init__()
 
         # Semantization
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=semantic_nc, out_channels=128, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=semantic_nc, out_channels=128, kernel_size=3, padding=1)
 
         # Stylization
         self.conv3 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
         # Instantiation
-        self.layout_proj1 = nn.Conv2d(3, 128, kernel_size=1)
-        self.layout_proj2 = nn.Conv2d(1, 128, kernel_size=1)
+        self.layout_proj1 = nn.Conv2d(directional_nc, 128, kernel_size=1)
+        self.layout_proj2 = nn.Conv2d(distance_nc, 128, kernel_size=1)
         self.conv5 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv6 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
 
@@ -27,7 +27,7 @@ class SIANNorm(nn.Module):
         self.conv9 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)  # beta_i
         self.conv10 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1) # beta_j
 
-        self.batch_norm = nn.InstanceNorm2d(128, affine=False)
+        self.batch_norm = nn.InstanceNorm2d(style_dim, affine=False)
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
         # Semantization
