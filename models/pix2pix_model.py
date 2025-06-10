@@ -141,7 +141,7 @@ class Pix2PixModel(torch.nn.Module):
         # Ghép toàn bộ làm input đầu vào
         input_all = torch.cat([input_semantics, semantic_map, directional_map, distance_map], dim=1)
 
-        return input_all, data['image']
+        return input_all, data['image'],  semantic_map, directional_map, distance_map, inst_map
 
 
     def  compute_generator_loss(self, input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map):
