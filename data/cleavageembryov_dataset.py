@@ -58,7 +58,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         direction_map = torch.from_numpy(np.load(direction_path)).float()
          # input image (real images)
         image_path = self.image_paths[index]
-        params = get_params(self.opt, self.opt.load_size)
+        params = get_params(self.opt, (self.opt.load_size,self.opt.load_size) )
         
         image = Image.open(image_path)
         image = image.convert('RGB')
