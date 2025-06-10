@@ -19,7 +19,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         parser.set_defaults(load_size=load_size)
         parser.set_defaults(crop_size=256)
         parser.set_defaults(display_winsize=256)
-
+        return parser
 
     def __init__(self, opt):
         super().__init__(opt)
