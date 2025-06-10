@@ -106,29 +106,43 @@ class Pix2PixModel(torch.nn.Module):
     # |data|: dictionary of the input data
 
     def preprocess_input(self, data):
-        # move to GPU and change data types
+        # Chuyển label sang long để tạo one-hot
         data['label'] = data['label'].long()
+
+        # Chuyển dữ liệu sang GPU nếu có
         if self.use_gpu():
             for key in ['label', 'instance', 'image', 'semantic_map', 'directional_map', 'distance_map']:
                 if key in data:
                     data[key] = data[key].cuda()
 
-        #TODO: Fix this to fit model  
-        # create one-hot label map
+        # One-hot label
         label_map = data['label']
         bs, _, h, w = label_map.size()
-        nc = self.opt.label_nc + 1 if self.opt.contain_dontcare_label \
-            else self.opt.label_nc
+        nc = self.opt.label_nc + 1 if self.opt.contain_dontcare_label else self.opt.label_nc
         input_label = self.FloatTensor(bs, nc, h, w).zero_()
         input_semantics = input_label.scatter_(1, label_map, 1.0)
 
-        # concatenate instance map if it exists
+        # Instance edge
         if not self.opt.no_instance:
             inst_map = data['instance']
             instance_edge_map = self.get_edges(inst_map)
-            input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)
+            input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)  # (B, nc+1, H, W)
 
-        return input_semantics, data['image'], data['semantic_map'], data['directional_map'], data['distance_map'], data['instance']
+        # Xử lý các bản đồ phụ trợ (resize hoặc unsqueeze nếu cần)
+        def ensure_shape(x, nc):
+            if x.dim() == 3:
+                x = x.unsqueeze(1)  # (B, H, W) -> (B, 1, H, W)
+            return x[:, :nc, :, :]  # Đảm bảo đúng số kênh
+
+        semantic_map = ensure_shape(data['semantic_map'].float(), self.opt.semantic_nc)
+        directional_map = ensure_shape(data['directional_map'].float(), self.opt.directional_nc)
+        distance_map = ensure_shape(data['distance_map'].float(), self.opt.distance_nc)
+
+        # Ghép toàn bộ làm input đầu vào
+        input_all = torch.cat([input_semantics, semantic_map, directional_map, distance_map], dim=1)
+
+        return input_all, data['image']
+
 
     def  compute_generator_loss(self, input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map):
 
