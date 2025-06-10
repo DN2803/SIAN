@@ -141,12 +141,15 @@ class SIANLoss(nn.Module):
         self.vgg_loss = VGGLoss(opt.gpu_ids)
         self.kld_loss = KLDLoss()
         self.instance_perceptual_loss = InstancePerceptualLoss()
-
+        lambda_f = 10.0
+        lambda_p = 5.0
+        lambda_kld = 0.05
+        lambda_reg = 1.0
         # Hệ số lambda (có thể điều chỉnh từ opt hoặc đặt thủ công)
-        self.lambda_f = opt.lambda_f      # perceptual
-        self.lambda_p = opt.lambda_p      # instance/patch loss
-        self.lambda_kld = opt.lambda_kld
-        self.lambda_reg = opt.lambda_reg  # style consistency
+        self.lambda_f = lambda_f      # perceptual
+        self.lambda_p = lambda_p      # instance/patch loss
+        self.lambda_kld = lambda_kld
+        self.lambda_reg = lambda_reg  # style consistency
 
     def forward(self, pred_fake, pred_real, real_img, fake_img,
                 mu, logvar, style_real, style_fake, mask):
