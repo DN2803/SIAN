@@ -61,7 +61,8 @@ class SIANGenerator(BaseNetwork):
     def forward(self, input, semantic_map, directional_map, distance_map, real_image=None, z=None):
         # Nếu z (style latent) không được truyền vào, tự sinh từ real_image
         if z is None and real_image is not None:
-            z = self.encoder(real_image)
+            mu, logvar = self.encoder(real_image)
+            z = self.reparameterize(mu, logvar)
 
         out = self.initial_conv(input)
         for block in self.blocks:
@@ -69,5 +70,13 @@ class SIANGenerator(BaseNetwork):
 
         out = self.final_conv(out)
         return torch.tanh(out)
-    def extract_style(self, real_image):
-        return self.encoder(real_image)
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+    def extract_style(self, real_image, use_mu_only=True):
+        mu, logvar = self.encoder(real_image)
+        if use_mu_only:
+            return mu
+        return self.reparameterize(mu, logvar)
+    
