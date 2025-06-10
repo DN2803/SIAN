@@ -33,6 +33,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         # Lấy tất cả các đường dẫn đến các dữ liệu
         self.instance_dir, self.semantic_dir, self.direction_dir, self.distance_dir, self.image_dir = self.get_paths(opt)
         self.paths = sorted(make_dataset(self.instance_dir))
+        self.image_paths = sorted(make_dataset(self.image_dir))
 
     def __getitem__(self, index):
         # Đường dẫn đến instance mask (đầu vào chính)
