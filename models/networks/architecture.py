@@ -114,6 +114,7 @@ class SIANResBlk(nn.Module):
         out =  out + skip 
         if self.upsample:
             out = F.interpolate(out, scale_factor=2, mode='nearest')
+        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
         return out
 # VGG architecter, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):
