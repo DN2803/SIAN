@@ -28,7 +28,11 @@ class SIANGenerator(BaseNetwork):
         
         # Thiết lập dải channel (có thể điều chỉnh)
         # Cấu hình kênh tương ứng với từng SIANResBlk (giảm dần)
-        channels = [512, 512, 256, 256, 128, 128, 64]
+        base_channel = opt.base_channel if hasattr(opt, 'base_channel') else 64
+        channels = [base_channel * 8, base_channel * 8, base_channel * 4, base_channel * 4, base_channel * 2, base_channel * 2, base_channel]
+        channel_pairs = list(zip(channels, channels[1:] + [channels[-1]]))  # đảm bảo có 7 cặp in-out
+
+        # channels = [512, 512, 256, 256, 128, 128, 64]
         
         # Khởi tạo convolution đầu vào, giả sử đầu vào có semantic_nc channel
         self.initial_conv = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
@@ -39,9 +43,7 @@ class SIANGenerator(BaseNetwork):
         
         # Tạo dãy SIANResBlk
         self.blocks = nn.ModuleList()
-        for i in range(opt.num_blocks):
-            in_c = channels[i - 1] if i > 0 else channels[0]
-            out_c = channels[i]
+        for in_c, out_c in channel_pairs:
             self.blocks.append(
                 SIANResBlk(
                     in_channels=in_c,
