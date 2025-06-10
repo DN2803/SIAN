@@ -68,6 +68,7 @@ class SIANGenerator(BaseNetwork):
             z = self.reparameterize(mu, logvar)
 
         out = self.initial_conv(input)
+        print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
             out = block(out, semantic_map, z, directional_map, distance_map)
 
