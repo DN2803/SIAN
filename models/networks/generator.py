@@ -17,7 +17,8 @@ class SIANGenerator(BaseNetwork):
         parser.add_argument('--style_dim', type=int, default=256, help="Dim of vector style")  
         parser.add_argument('--directional_nc', type=int, default=1, help="Num channel of directional")
         parser.add_argument('--distance_nc', type=int, default=1, help="Num channel of distance")  
-        parser.add_argument('--semantic_nc', type=int, default=6, help="Semantic label channels (1 label: 'cell')")
+        parser.add_argument('--semantic_nc', type=int, default=1, help="Semantic label channels (1 label: 'cell')")
+        parser.add_argument('--input_nc', type=int, default=6, help="Number of input channels (e.g., 3 for RGB images)")
         return parser
 
     def __init__(self, opt):
@@ -30,7 +31,7 @@ class SIANGenerator(BaseNetwork):
         channels = [512, 512, 256, 256, 128, 128, 64]
         
         # Khởi tạo convolution đầu vào, giả sử đầu vào có semantic_nc channel
-        self.initial_conv = nn.Conv2d(opt.semantic_nc, channels[0], kernel_size=3, padding=1)
+        self.initial_conv = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
 
         self.encoder = ConvEncoder(opt)
 
