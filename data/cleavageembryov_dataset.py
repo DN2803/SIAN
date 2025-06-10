@@ -26,7 +26,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
 
     def __init__(self, opt):
         # Khởi tạo Pix2pixDataset đúng cách với đối số opt
-        super().__init__(opt)
+        super().__init__()
         self.opt = opt
 
         # Lấy tất cả các đường dẫn đến các dữ liệu
