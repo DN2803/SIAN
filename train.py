@@ -12,10 +12,10 @@ from trainers.pix2pix_trainer import Pix2PixTrainer
 opt = TrainOptions().parse()
 print(' '.join(sys.argv))
 
-# load the dataset
-dataloader = data.create_dataloader(opt)
+# # load the dataset
+# dataloader = data.create_dataloader(opt)
 
-print(len(dataloader))
+# print(len(dataloader))
 
 
 # # create trainer (model đã là SIAN bên trong)
