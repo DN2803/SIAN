@@ -25,7 +25,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         super().__init__(opt)
         self.root = opt.dataroot
         phase = 'val' if opt.phase == 'test' else opt.phase
-        self.instance_dir = os.path.join(self.root, f'{phase}_instance')
+        self.instance_dir = os.path.join(self.root, f'{phase}_inst')
         self.semantic_dir = os.path.join(self.root, f'{phase}_semantic')
         self.direction_dir = os.path.join(self.root, f'{phase}_direction')
         self.distance_dir = os.path.join(self.root, f'{phase}_distance')
