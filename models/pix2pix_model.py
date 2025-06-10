@@ -113,6 +113,7 @@ class Pix2PixModel(torch.nn.Module):
                 if key in data:
                     data[key] = data[key].cuda()
 
+        #TODO: Fix this to fit model  
         # create one-hot label map
         label_map = data['label']
         bs, _, h, w = label_map.size()
