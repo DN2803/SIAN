@@ -29,8 +29,10 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         self.semantic_dir = os.path.join(self.root, f'{phase}_semantic')
         self.direction_dir = os.path.join(self.root, f'{phase}_direction')
         self.distance_dir = os.path.join(self.root, f'{phase}_distance')
+        self.image_dir = os.path.join(self.root, f'{phase}_image')
     def __getitem__(self, index):
         # Load instance mask (input image)
+        
         inst_path = self.paths[index]
         inst_name = os.path.splitext(os.path.basename(inst_path))[0]
         instance_img = Image.open(inst_path).convert('L')
@@ -43,7 +45,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         semantic_path = os.path.join(self.semantic_dir, f'{inst_name}.npy')
         direction_path = os.path.join(self.direction_dir, f'{inst_name}.npy')
         distance_path = os.path.join(self.distance_dir, f'{inst_name}.npy')
-
+        image_path = os.path.join(self.image_dir, f'{inst_name}.png')
         semantic_map = torch.from_numpy(np.load(semantic_path)).float()
         distance_map = torch.from_numpy(np.load(distance_path)).float()
         direction_map = torch.from_numpy(np.load(direction_path)).float()
@@ -53,7 +55,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
             'semantic': semantic_map,
             'distance': distance_map,
             'direction': direction_map,
-            'path': inst_path
+            'path': image_path
         }
     def __len__(self):
         return len(self.paths)
