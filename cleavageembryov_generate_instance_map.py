@@ -11,7 +11,7 @@ from models.networks.mask_generator import MaskProcessorModel
 parser = argparse.ArgumentParser()
 parser.add_argument('--annotation_file', type=str,
                     default="C:/Users/Fujinet/Documents/ws/CleavageEmbryov1.1/CleavageEmbryov1.1/annotations/instances_train.json")
-parser.add_argument('--output_dir', type=str, default="./datasets/cleavageembryov/train_inst/")
+parser.add_argument('--output_dir', type=str, default="./datasets/cleavageembryov")
 parser.add_argument('--state', type=str, default='train')
 opt = parser.parse_args()
 
@@ -21,8 +21,13 @@ print("output dir at:", opt.output_dir)
 if not os.path.exists(opt.output_dir):
     os.makedirs(opt.output_dir)
 output_instance_dir = os.path.join(opt.output_dir, f"{opt.state}_inst")
-output_contour_dir = os.path.join(opt.output_dir, f"{opt.state}_contour")
+output_direction_dir = os.path.join(opt.output_dir, f"{opt.state}_direction")
+output_distance_dir = os.path.join(opt.output_dir, f'{opt.state}_distance')
+output_semantic_dir = os.path.join(opt.output_dir, f"{opt.state}_semantic")
 os.makedirs(output_instance_dir)
+os.makedirs(output_direction_dir)
+os.makedirs(output_distance_dir)
+os.makedirs(output_semantic_dir)
 coco = COCO(opt.annotation_file)
 # Tạo model
 processor = MaskProcessorModel()
@@ -70,9 +75,9 @@ for ix, id in enumerate(imgIds):
     io.imsave(inst_path, inst_img.astype(np.uint8))
     # Đường dẫn để lưu các file .npy
     base_name = os.path.splitext(os.path.basename(inst_path))[0]
-    semantic_path = os.path.join(opt.output_dir, f"{base_name}_semantic.npy")
-    direction_path = os.path.join(opt.output_dir, f"{base_name}_direction.npy")
-    distance_path = os.path.join(opt.output_dir, f"{base_name}_distance.npy")
+    semantic_path = os.path.join(output_semantic_dir, f"{base_name}.npy")
+    direction_path = os.path.join(output_direction_dir, f"{base_name}.npy")
+    distance_path = os.path.join(output_distance_dir, f"{base_name}.npy")
 
     # Chuyển sang NumPy và lưu
     np.save(semantic_path, semantic_masks.cpu().numpy())

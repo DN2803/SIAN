@@ -1,13 +1,16 @@
 from data.pix2pix_dataset import Pix2pixDataset
 from data.image_folder import make_dataset
+import os
+from PIL import Image
+import numpy as np
+import torch
 
 #TODO: dataloader 
 class CleavageEmbryovDataset(Pix2pixDataset):
     """ Dataset that loads images from directories
-        Use option --label_dir, --image_dir, --instance_dir to specify the directories.
+        Use option --data_dir
         The images in the directories are sorted in alphabetical order and paired in order.
     """
-
     @staticmethod
     def modify_commandline_options(parser, is_train):
         parser = Pix2pixDataset.modify_commandline_options(parser, is_train)
@@ -16,30 +19,41 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         parser.set_defaults(load_size=load_size)
         parser.set_defaults(crop_size=256)
         parser.set_defaults(display_winsize=256)
-        parser.set_defaults(label_nc=13)
-        parser.set_defaults(contain_dontcare_label=False)
 
-        parser.add_argument('--label_dir', type=str, required=True,
-                            help='path to the directory that contains label images')
-        parser.add_argument('--image_dir', type=str, required=True,
-                            help='path to the directory that contains photo images')
-        parser.add_argument('--instance_dir', type=str, default='',
-                            help='path to the directory that contains instance maps. Leave black if not exists')
-        return parser
 
-    def get_paths(self, opt):
-        label_dir = opt.label_dir
-        label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
+    def __init__(self, opt):
+        super().__init__(opt)
+        self.root = opt.dataroot
+        phase = 'val' if opt.phase == 'test' else opt.phase
+        self.instance_dir = os.path.join(self.root, f'{phase}_instance')
+        self.semantic_dir = os.path.join(self.root, f'{phase}_semantic')
+        self.direction_dir = os.path.join(self.root, f'{phase}_direction')
+        self.distance_dir = os.path.join(self.root, f'{phase}_distance')
+    def __getitem__(self, index):
+        # Load instance mask (input image)
+        inst_path = self.paths[index]
+        inst_name = os.path.splitext(os.path.basename(inst_path))[0]
+        instance_img = Image.open(inst_path).convert('L')
+        if self.opt.load_size > 0:
+            instance_img = instance_img.resize((self.opt.load_size, self.opt.load_size))
 
-        image_dir = opt.image_dir
-        image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
+        instance_tensor = self.transform(instance_img)
 
-        if len(opt.instance_dir) > 0:
-            instance_dir = opt.instance_dir
-            instance_paths = make_dataset(instance_dir, recursive=False, read_cache=True)
-        else:
-            instance_paths = []
+        # Load semantic, direction, distance maps
+        semantic_path = os.path.join(self.semantic_dir, f'{inst_name}.npy')
+        direction_path = os.path.join(self.direction_dir, f'{inst_name}.npy')
+        distance_path = os.path.join(self.distance_dir, f'{inst_name}.npy')
 
-        assert len(label_paths) == len(image_paths), "The #images in %s and %s do not match. Is there something wrong?"
-
-        return label_paths, image_paths, instance_paths
+        semantic_map = torch.from_numpy(np.load(semantic_path)).float()
+        distance_map = torch.from_numpy(np.load(distance_path)).float()
+        direction_map = torch.from_numpy(np.load(direction_path)).float()
+        return {
+            'label': instance_tensor,
+            'inst': instance_tensor,
+            'semantic': semantic_map,
+            'distance': distance_map,
+            'direction': direction_map,
+            'path': inst_path
+        }
+    def __len__(self):
+        return len(self.paths)

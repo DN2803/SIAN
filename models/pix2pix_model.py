@@ -40,11 +40,10 @@ class Pix2PixModel(torch.nn.Module):
     # can't parallelize custom functions, we branch to different
     # routines based on |mode|.
     def forward(self, data, mode):
-        input_semantics, real_image = self.preprocess_input(data)
-
+        input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = self.preprocess_input(data)
         if mode == 'generator':
             g_loss, generated = self.compute_generator_loss(
-                input_semantics, real_image)
+                input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map)
             return g_loss, generated
         elif mode == 'discriminator':
             d_loss = self.compute_discriminator_loss(
@@ -110,9 +109,9 @@ class Pix2PixModel(torch.nn.Module):
         # move to GPU and change data types
         data['label'] = data['label'].long()
         if self.use_gpu():
-            data['label'] = data['label'].cuda()
-            data['instance'] = data['instance'].cuda()
-            data['image'] = data['image'].cuda()
+            for key in ['label', 'instance', 'image', 'semantic_map', 'directional_map', 'distance_map']:
+                if key in data:
+                    data[key] = data[key].cuda()
 
         # create one-hot label map
         label_map = data['label']
@@ -128,24 +127,25 @@ class Pix2PixModel(torch.nn.Module):
             instance_edge_map = self.get_edges(inst_map)
             input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)
 
-        return input_semantics, data['image']
+        return input_semantics, data['image'], data['semantic_map'], data['directional_map'], data['distance_map'], data['instance']
 
-    def compute_generator_loss(self, input_semantics, real_image):
+    def  compute_generator_loss(self, input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map):
+
         G_losses = {}
         # Tạo ảnh giả và mã hóa z nếu cần
         fake_image, mu, logvar = None, None, None
         if self.opt.use_vae:
             z, mu, logvar = self.encode_z(real_image)
-            fake_image = self.netG(input_semantics, z=z)
+            fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image, z=z)
         else:
-            fake_image = self.netG(input_semantics)
+            fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image)
+
+        pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
         # fake_image, KLD_loss = self.generate_fake(
         #     input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
 
         # if self.opt.use_vae:
         #     G_losses['KLD'] = KLD_loss
-
-        pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
 
         # Style vector (giả sử được trích xuất từ G)
         style_real = self.netG.extract_style(real_image)  # hoặc một hàm style encoder riêng

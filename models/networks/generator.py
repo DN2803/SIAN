@@ -52,14 +52,12 @@ class SIANGenerator(BaseNetwork):
         # Conv cuối để ra ảnh RGB 3 channel
         self.final_conv = nn.Conv2d(channels[-1], 3, kernel_size=3, padding=1)
     
-    def forward(self, input_semantics, real_image=None, z=None):
+    def forward(self, input, semantic_map, directional_map, distance_map, real_image=None, z=None):
         # Nếu z (style latent) không được truyền vào, tự sinh từ real_image
         if z is None and real_image is not None:
             z = self.encoder(real_image)
-        
-        semantic_map, directional_map, distance_map = self.mask_generator(input_semantics)
 
-        out = self.initial_conv(input_semantics)
+        out = self.initial_conv(input)
         for block in self.blocks:
             out = block(out, semantic_map, z, directional_map, distance_map)
 
