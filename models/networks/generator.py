@@ -15,7 +15,9 @@ class SIANGenerator(BaseNetwork):
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
         parser.add_argument('--num_blocks', type=int, default=7, help="Num of SIANResBlk blocks") 
         parser.add_argument('--base_channels', type=int, default=128, help="The starting number of feature channels")    
-        parser.add_argument('--style_dim', type=int, default=128, help="Dim of vector style")    
+        parser.add_argument('--style_dim', type=int, default=128, help="Dim of vector style")  
+        parser.add_argument('--directional_nc', type=int, default=1, help="Num channel of directional")
+        parser.add_argument('--distance_nc', type=int, default=1, help="Num channel of distance")  
         return parser
 
     def __init__(self, opt):
