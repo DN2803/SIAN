@@ -40,7 +40,7 @@ def get_option_setter(dataset_name):
 
 def create_dataloader(opt):
     dataset = find_dataset_using_name(opt.dataset_mode)
-    instance = dataset()
+    instance = dataset(opt)
     instance.initialize(opt)
     print("dataset [%s] of size %d was created" %
           (type(instance).__name__, len(instance)))
