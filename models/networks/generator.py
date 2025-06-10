@@ -17,7 +17,7 @@ class SIANGenerator(BaseNetwork):
         parser.add_argument('--style_dim', type=int, default=256, help="Dim of vector style")  
         parser.add_argument('--directional_nc', type=int, default=1, help="Num channel of directional")
         parser.add_argument('--distance_nc', type=int, default=1, help="Num channel of distance")  
-        parser.add_argument('--semantic_nc', type=int, default=1, help="Semantic label channels (1 label: 'cell')")
+        parser.add_argument('--semantic_nc', type=int, default=6, help="Semantic label channels (1 label: 'cell')")
         return parser
 
     def __init__(self, opt):
