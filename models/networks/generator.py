@@ -44,6 +44,7 @@ class SIANGenerator(BaseNetwork):
         # Tạo dãy SIANResBlk
         self.blocks = nn.ModuleList()
         for in_c, out_c in channel_pairs:
+            print(f"Adding SIANResBlk with in_channels={in_c}, out_channels={out_c}")
             self.blocks.append(
                 SIANResBlk(
                     in_channels=in_c,
