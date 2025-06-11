@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 from data.base_dataset import BaseDataset, get_params, get_transform
-
+import torch.nn.functional as F
 class CleavageEmbryovDataset(Pix2pixDataset):
     """
     Dataset dùng cho mô hình SIAN với các đầu vào:
@@ -20,7 +20,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
     def modify_commandline_options(parser, is_train):
         parser = Pix2pixDataset.modify_commandline_options(parser, is_train)
         parser.set_defaults(preprocess_mode='resize_and_crop')
-        load_size = 286 if is_train else 256
+        load_size = 256
         parser.set_defaults(load_size=load_size)
         parser.set_defaults(crop_size=256)
         parser.set_defaults(display_winsize=256)
@@ -53,9 +53,9 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         distance_path = os.path.join(self.distance_dir, f'{inst_name}.npy')
         image_path = os.path.join(self.image_dir, f'{inst_name}.png')
 
-        semantic_map = torch.from_numpy(np.load(semantic_path)).float()
-        distance_map = torch.from_numpy(np.load(distance_path)).float()
-        direction_map = torch.from_numpy(np.load(direction_path)).float()
+        semantic_map = self.resize_map(semantic_path)
+        distance_map = self.resize_map(distance_path)
+        direction_map = self.resize_map(direction_path)
          # input image (real images)
         image_path = self.image_paths[index]
         params = get_params(self.opt, (self.opt.load_size,self.opt.load_size) )
@@ -65,8 +65,10 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         transform_image = get_transform(self.opt, params)
         image_tensor = transform_image(image)
 
+
+
         return {
-            'label': instance_tensor,
+            'label': instance_tensor.long(),
             'instance': instance_tensor,  # bạn có thể sửa nếu cần dùng riêng inst
             'semantic_map': semantic_map,
             'distance_map': distance_map,
@@ -88,3 +90,11 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         distance_dir = os.path.join(root, f'{phase}_distance')
         image_dir = os.path.join(root, f'{phase}_image')
         return instance_dir, semantic_dir, direction_dir, distance_dir, image_dir
+    # Load và chuyển về tensor, thêm batch dim (1, C, H, W), resize, rồi bỏ batch dim
+    def resize_map(self, np_path):
+        map_tensor = torch.from_numpy(np.load(np_path)).float()
+        if len(map_tensor.shape) == 2:  # (H, W)
+            map_tensor = map_tensor.unsqueeze(0)  # (1, H, W)
+        map_tensor = map_tensor.unsqueeze(0)  # (1, C, H, W)
+        map_tensor = F.interpolate(map_tensor, size=(self.opt.load_size, self.opt.load_size), mode='bilinear', align_corners=False)
+        return map_tensor.squeeze(0)  # (C, H, W)
