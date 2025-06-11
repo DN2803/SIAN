@@ -42,7 +42,7 @@ class Pix2PixModel(torch.nn.Module):
     # routines based on |mode|.
     def forward(self, data, mode):
         input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = self.preprocess_input(data)
-        input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = input_semantics.half(), real_image.half(), semantic_map.half(), directional_map.half(), distance_map.half(), inst_map.half()
+        input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = input_semantics.to(torch.bfloat16) , real_image.to(torch.bfloat16) , semantic_map.to(torch.bfloat16) , directional_map.to(torch.bfloat16) , distance_map.to(torch.bfloat16) , inst_map.to(torch.bfloat16) 
         
         if mode == 'generator':
             g_loss, generated = self.compute_generator_loss(
@@ -103,9 +103,9 @@ class Pix2PixModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
-        netG = networks.define_G(opt).half()
-        netD = networks.define_D(opt).half() if opt.isTrain else None
-        netE = networks.define_E(opt).half() if opt.use_vae else None
+        netG = networks.define_G(opt).to(torch.bfloat16) 
+        netD = networks.define_D(opt).to(torch.bfloat16)  if opt.isTrain else None
+        netE = networks.define_E(opt).to(torch.bfloat16)  if opt.use_vae else None
 
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
