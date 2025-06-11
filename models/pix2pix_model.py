@@ -181,7 +181,7 @@ class Pix2PixModel(torch.nn.Module):
         style_fake = self.netG.extract_style(fake_image)
 
         # Mask instance map (để tính patch loss)
-        mask = self.get_instance_mask()  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
+        mask = inst_map  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
 
         # compute SIAN loss
         total_loss, loss_dict = self.sian_loss(
