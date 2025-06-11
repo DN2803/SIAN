@@ -51,7 +51,7 @@ class Pix2PixModel(torch.nn.Module):
             return g_loss, generated
         elif mode == 'discriminator':
             d_loss = self.compute_discriminator_loss(
-                input_semantics, real_image)
+                input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map)
             del input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map
             gc.collect()
             torch.cuda.empty_cache()
@@ -194,10 +194,10 @@ class Pix2PixModel(torch.nn.Module):
         return G_losses, fake_image
 
 
-    def compute_discriminator_loss(self, input_semantics, real_image):
+    def compute_discriminator_loss(self, input_semantics, real_image, semantic_map, directional_map, distance_map):
         D_losses = {}
         with torch.no_grad():
-            fake_image, _ = self.generate_fake(input_semantics, real_image)
+            fake_image, _ = self.generate_fake(input_semantics, semantic_map, directional_map, distance_map, real_image)
             fake_image = fake_image.detach()
             # fake_image.requires_grad_()
 
@@ -216,11 +216,11 @@ class Pix2PixModel(torch.nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
-    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
+    def generate_fake(self, input_semantics, semantic_map, directional_map, distance_map, real_image, compute_kld_loss=False):
         z, mu, logvar = None, None, None
         if self.opt.use_vae:
             z, mu, logvar = self.encode_z(real_image)
-        fake_image = self.netG(input_semantics, z=z)
+        fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, z=z)
         return fake_image, mu, logvar
     
     # Given fake and real image, return the prediction of discriminator
