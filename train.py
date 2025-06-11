@@ -37,14 +37,15 @@ for epoch in iter_counter.training_epochs():
             # Train generator
             if i % opt.D_steps_per_G == 0:
                 trainer.run_generator_one_step(data_i)
-
+            gc.collect()
+            torch.cuda.empty_cache()
             # Train discriminator
             trainer.run_discriminator_one_step(data_i)
 
         except Exception as e:
             print(f"❌ Error in training step: {str(e)}")
             raise
-        
+
         del data_i
         gc.collect()
         torch.cuda.empty_cache()
