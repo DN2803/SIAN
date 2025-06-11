@@ -182,7 +182,7 @@ class Pix2PixModel(torch.nn.Module):
 
         # Mask instance map (để tính patch loss)
         mask = inst_map  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
-
+        z, mu, logvar = self.encode_z(real_image)
         # compute SIAN loss
         total_loss, loss_dict = self.criterionSIAN(
             pred_fake, pred_real, real_image, fake_image,
