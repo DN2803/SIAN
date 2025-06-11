@@ -100,7 +100,7 @@ class SIANResBlk(nn.Module):
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
        
         # Residual path 
-        print(semantic_map.shape, style_vector.shape, directional_map.shape, distance_map.shape)
+        print(x.shape, semantic_map.shape, style_vector.shape, directional_map.shape, distance_map.shape)
         out = self.sian1(x, semantic_map, style_vector, directional_map, distance_map)
         out = self.relu(out)
         out = self.conv1(out)
