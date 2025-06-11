@@ -28,14 +28,19 @@ class SIANGenerator(BaseNetwork):
         
         # Thiết lập dải channel (có thể điều chỉnh)
         # Cấu hình kênh tương ứng với từng SIANResBlk (giảm dần)
-        base_channel = opt.base_channel if hasattr(opt, 'base_channel') else 64
+        base_channel = opt.ngf
         channels = [base_channel * 8, base_channel * 8, base_channel * 4, base_channel * 4, base_channel * 2, base_channel * 2, base_channel]
         channel_pairs = list(zip(channels, channels[1:] + [channels[-1]]))  # đảm bảo có 7 cặp in-out
+
+        self.sw, self.sh = self.compute_latent_vector_size(opt)
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
         
         # Khởi tạo convolution đầu vào, giả sử đầu vào có semantic_nc channel
-        self.initial_conv = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
+        if (opt.use_vae):
+            self.fc = nn.Linear(opt.z_dim,  channels[0] * self.sw *self.sh)
+        else:
+            self.fc = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
 
         self.encoder = ConvEncoder(opt)
 
@@ -62,12 +67,14 @@ class SIANGenerator(BaseNetwork):
         self.final_conv = nn.Conv2d(channels[-1], 3, kernel_size=3, padding=1)
     
     def forward(self, input, semantic_map, directional_map, distance_map, real_image=None, z=None):
+        seg = input 
         # Nếu z (style latent) không được truyền vào, tự sinh từ real_image
         if z is None and real_image is not None:
             mu, logvar = self.encoder(real_image)
             z = self.reparameterize(mu, logvar)
-
-        out = self.initial_conv(input)
+        # input
+        seg = F.interpolate(seg, size=(self.sh, self.sw))
+        out = self.fc(seg)
         print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
             out, semantic_map, directional_map, distance_map = block(out, semantic_map, z, directional_map, distance_map)
@@ -83,4 +90,9 @@ class SIANGenerator(BaseNetwork):
         if use_mu_only:
             return mu
         return self.reparameterize(mu, logvar)
+    def compute_latent_vector_size(self, opt):
+        num_up_layer = opt.num_blocks
+
+        sw = opt.crop_size // (2**num_up_layer)
+        sh = round(sw / opt.aspect_ratio)
     
