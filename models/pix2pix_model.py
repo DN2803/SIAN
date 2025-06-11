@@ -51,7 +51,7 @@ class Pix2PixModel(torch.nn.Module):
             return g_loss, generated
         elif mode == 'discriminator':
             d_loss = self.compute_discriminator_loss(
-                input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map)
+                input_semantics, real_image, semantic_map, directional_map, distance_map)
             del input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map
             gc.collect()
             torch.cuda.empty_cache()
