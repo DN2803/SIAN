@@ -74,7 +74,9 @@ class SIANGenerator(BaseNetwork):
             z = self.reparameterize(mu, logvar)
         # input
         seg = F.interpolate(seg, size=(self.sh, self.sw))
-        m = semantic_map, p = directional_map, q = distance_map
+        m = semantic_map
+        p = directional_map
+        q = distance_map
         out = self.fc(seg)
         print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
