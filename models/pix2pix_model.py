@@ -177,8 +177,8 @@ class Pix2PixModel(torch.nn.Module):
         #     G_losses['KLD'] = KLD_loss
 
         # Style vector (giả sử được trích xuất từ G)
-        mu, logvar, style_real = self.netG.extract_style(real_image)  # hoặc một hàm style encoder riêng
-        _, _, style_fake = self.netG.extract_style(fake_image)
+        mu, logvar, style_real = self.netG.extract_style(real_image, False)  # hoặc một hàm style encoder riêng
+        _, _, style_fake = self.netG.extract_style(fake_image, False)
 
         # Mask instance map (để tính patch loss)
         mask = inst_map  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
