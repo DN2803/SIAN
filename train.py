@@ -46,9 +46,9 @@ for epoch in iter_counter.training_epochs():
             print(f"❌ Error in training step: {str(e)}")
             raise
 
-        del data_i
-        gc.collect()
-        torch.cuda.empty_cache()
+        # del data_i
+        # gc.collect()
+        # torch.cuda.empty_cache()
 
         # Visualize
         if iter_counter.needs_printing():
