@@ -141,6 +141,7 @@ class SIANLoss(nn.Module):
         self.vgg_loss = VGGLoss(opt.gpu_ids)
         self.kld_loss = KLDLoss()
         self.instance_perceptual_loss = InstancePerceptualLoss()
+        self.l1_loss = nn.L1Loss()
         lambda_f = 10.0
         lambda_p = 5.0
         lambda_kld = 0.05
