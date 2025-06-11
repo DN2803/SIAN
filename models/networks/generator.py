@@ -18,7 +18,7 @@ class SIANGenerator(BaseNetwork):
         parser.add_argument('--directional_nc', type=int, default=1, help="Num channel of directional")
         parser.add_argument('--distance_nc', type=int, default=1, help="Num channel of distance")  
         parser.add_argument('--semantic_nc', type=int, default=1, help="Semantic label channels (1 label: 'cell')")
-        parser.add_argument('--input_nc', type=int, default=6, help="Number of input channels (e.g., 3 for RGB images)")
+        parser.add_argument('--input_nc', type=int, default=3, help="Number of input channels (e.g., 3 for RGB images)")
         return parser
 
     def __init__(self, opt):

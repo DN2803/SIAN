@@ -100,7 +100,7 @@ class NLayerDiscriminator(BaseNetwork):
             self.add_module('model' + str(n), nn.Sequential(*sequence[n]))
 
     def compute_D_input_nc(self, opt):
-        input_nc = opt.label_nc + opt.output_nc + 3 # các map thêm 
+        input_nc = opt.label_nc + opt.output_nc # + 3 # các map thêm 
         if opt.contain_dontcare_label:
             input_nc += 1
         if not opt.no_instance:
