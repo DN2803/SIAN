@@ -49,7 +49,7 @@ class SIANGenerator(BaseNetwork):
         # Tạo dãy SIANResBlk
         self.blocks = nn.ModuleList()
         for in_c, out_c in channel_pairs:
-            print(f"Adding SIANResBlk with in_channels={in_c}, out_channels={out_c}")
+            # print(f"Adding SIANResBlk with in_channels={in_c}, out_channels={out_c}")
             self.blocks.append(
                 SIANResBlk(
                     in_channels=in_c,
@@ -79,7 +79,7 @@ class SIANGenerator(BaseNetwork):
         p = directional_map
         q = distance_map
         out = self.fc(seg)
-        print(f"Initial conv output shape: {out.shape}")
+        # print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)

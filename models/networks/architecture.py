@@ -65,9 +65,9 @@ class SIANNorm(nn.Module):
         # Normalize and modulate
         x = self.input_proj(input)  # Project input to 128 channels if needed
         x_norm = self.instance_norm(x)
-        print("x_norm shape:", x_norm.shape)
-        print("gamma shape:", gamma.shape)
-        print("beta shape:", beta.shape)
+        # print("x_norm shape:", x_norm.shape)
+        # print("gamma shape:", gamma.shape)
+        # print("beta shape:", beta.shape)
         out = gamma * x_norm + beta
         return out
 
@@ -103,7 +103,7 @@ class SIANResBlk(nn.Module):
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
        
         # Residual path 
-        print(x.shape, semantic_map.shape, style_vector.shape, directional_map.shape, distance_map.shape)
+        # print(x.shape, semantic_map.shape, style_vector.shape, directional_map.shape, distance_map.shape)
         out = self.sian1(x, semantic_map, style_vector, directional_map, distance_map)
         out = self.relu(out)
         out = self.conv1(out)
@@ -120,7 +120,7 @@ class SIANResBlk(nn.Module):
         if self.upsample:
             out = F.interpolate(out, scale_factor=2, mode='nearest')
 
-        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
+        # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
         return out
     
     
