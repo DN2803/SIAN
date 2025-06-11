@@ -220,7 +220,7 @@ class Pix2PixModel(torch.nn.Module):
         z, mu, logvar = None, None, None
         if self.opt.use_vae:
             z, mu, logvar = self.encode_z(real_image)
-        fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, z=z)
+        fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image, z=z)
         return fake_image, mu, logvar
     
     # Given fake and real image, return the prediction of discriminator
