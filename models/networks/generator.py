@@ -96,7 +96,7 @@ class SIANGenerator(BaseNetwork):
         mu, logvar = self.encoder(real_image)
         if use_mu_only:
             return mu
-        return self.reparameterize(mu, logvar)
+        return mu, logvar, self.reparameterize(mu, logvar)
     def compute_latent_vector_size(self, opt):
         num_up_layer = opt.num_blocks
 
