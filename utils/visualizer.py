@@ -115,9 +115,9 @@ class Visualizer():
     def print_current_errors(self, epoch, i, errors, t):
         message = '(epoch: %d, iters: %d, time: %.3f) ' % (epoch, i, t)
         for k, v in errors.items():
-            #print(v)
+            print(v)
             #if v != 0:
-            v = v.mean().float()
+            # v = v.mean().float()
             message += '%s: %.3f ' % (k, v)
 
         print(message)
