@@ -4,36 +4,36 @@ import torch.nn.functional as F
 import torchvision
 
 class SIANNorm(nn.Module):
-    def __init__(self, in_channels, semantic_nc, style_dim, directional_nc, distance_nc):
+    def __init__(self, in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc):
         super(SIANNorm, self).__init__()
-        self.out_channels = 128  # Cố định số kênh output trung gian
+        self.conv_c = 128  # Cố định số kênh output trung gian
 
         # Semantization
-        self.conv1 = nn.Conv2d(semantic_nc, self.out_channels, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(semantic_nc, self.out_channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(semantic_nc, self.conv_c, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(semantic_nc, self.conv_c, kernel_size=3, padding=1)
 
         # Stylization
-        self.style_proj = nn.Linear(style_dim, self.out_channels)
-        self.conv3 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)
-        self.conv4 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)
+        self.style_proj = nn.Linear(style_dim, self.conv_c)
+        self.conv3 = nn.Conv2d(self.conv_c, self.conv_c, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(self.conv_c, self.conv_c, kernel_size=3, padding=1)
 
         # Instantiation
-        self.layout_proj1 = nn.Conv2d(directional_nc, self.out_channels, kernel_size=1)
-        self.layout_proj2 = nn.Conv2d(distance_nc, self.out_channels, kernel_size=1)
-        self.conv5 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)
-        self.conv6 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)
+        self.layout_proj1 = nn.Conv2d(directional_nc, self.conv_c, kernel_size=1)
+        self.layout_proj2 = nn.Conv2d(distance_nc, self.conv_c, kernel_size=1)
+        self.conv5 = nn.Conv2d(self.conv_c, self.conv_c, kernel_size=3, padding=1)
+        self.conv6 = nn.Conv2d(self.conv_c, self.conv_c, kernel_size=3, padding=1)
 
         # Modulation
-        self.conv7 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)  # gamma_i
-        self.conv8 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)  # gamma_j
-        self.conv9 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1)  # beta_i
-        self.conv10 = nn.Conv2d(self.out_channels, self.out_channels, kernel_size=3, padding=1) # beta_j
+        self.conv7 = nn.Conv2d(self.conv_c, out_channels, kernel_size=3, padding=1)  # gamma_i
+        self.conv8 = nn.Conv2d(self.conv_c, out_channels, kernel_size=3, padding=1)  # gamma_j
+        self.conv9 = nn.Conv2d(self.conv_c, out_channels, kernel_size=3, padding=1)  # beta_i
+        self.conv10 = nn.Conv2d(self.conv_c, out_channels, kernel_size=3, padding=1) # beta_j
 
         # Batch norm with fixed out_channels = 128
-        self.instance_norm = nn.InstanceNorm2d(self.out_channels, affine=False)
+        self.instance_norm = nn.InstanceNorm2d(out_channels, affine=False)
 
         # Project input if needed
-        self.input_proj = nn.Conv2d(in_channels, self.out_channels, kernel_size=1) if in_channels != self.out_channels else nn.Identity()
+        self.input_proj = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels else nn.Identity()
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
         # Semantization
@@ -85,15 +85,15 @@ class SIANResBlk(nn.Module):
         self.out_channels = out_channels
         
         # 2 SIAN blocks
-        self.sian1 = SIANNorm(in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv1 = nn.Conv2d(128, out_channels, kernel_size=3, padding=1)
+        self.sian1 = SIANNorm(in_channels, out_channels,  semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv1 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
         
-        self.sian2 = SIANNorm(out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv2 = nn.Conv2d(128, out_channels, kernel_size=3, padding=1)
+        self.sian2 = SIANNorm(out_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
         
         # Skip connection
-        self.sian_skip = SIANNorm(in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv_skip = nn.Conv2d(128, out_channels, kernel_size=1, padding=0)
+        self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv_skip = nn.Conv2d(out_channels, out_channels, kernel_size=1, padding=0)
         
         self.relu = nn.ReLU(inplace=True)
 
