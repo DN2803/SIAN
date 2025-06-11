@@ -6,6 +6,8 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 from models.networks.sync_batchnorm import DataParallelWithCallback
 from models.pix2pix_model import Pix2PixModel
 
+import gc
+import torch 
 
 class Pix2PixTrainer():
     """
@@ -38,6 +40,7 @@ class Pix2PixTrainer():
         self.optimizer_G.step()
         self.g_losses = g_losses
         self.generated = generated
+
 
     def run_discriminator_one_step(self, data):
         self.optimizer_D.zero_grad()

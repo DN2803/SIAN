@@ -8,6 +8,9 @@ from utils.iter_counter import IterationCounter
 from utils.visualizer import Visualizer
 from trainers.pix2pix_trainer import Pix2PixTrainer
 
+import gc
+import torch 
+
 # parse options
 opt = TrainOptions().parse()
 print(' '.join(sys.argv))
@@ -41,6 +44,10 @@ for epoch in iter_counter.training_epochs():
         except Exception as e:
             print(f"❌ Error in training step: {str(e)}")
             raise
+        
+        del data_i
+        gc.collect()
+        torch.cuda.empty_cache()
 
         # Visualize
         if iter_counter.needs_printing():
