@@ -42,6 +42,8 @@ class Pix2PixModel(torch.nn.Module):
     # routines based on |mode|.
     def forward(self, data, mode):
         input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = self.preprocess_input(data)
+        input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map = input_semantics.half(), real_image.half(), semantic_map.half(), directional_map.half(), distance_map.half(), inst_map.half()
+        
         if mode == 'generator':
             g_loss, generated = self.compute_generator_loss(
                 input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map)
@@ -101,9 +103,9 @@ class Pix2PixModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
-        netG = networks.define_G(opt)
-        netD = networks.define_D(opt) if opt.isTrain else None
-        netE = networks.define_E(opt) if opt.use_vae else None
+        netG = networks.define_G(opt).half()
+        netD = networks.define_D(opt).half() if opt.isTrain else None
+        netE = networks.define_E(opt).half() if opt.use_vae else None
 
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
