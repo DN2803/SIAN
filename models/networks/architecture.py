@@ -41,7 +41,7 @@ class SIANNorm(nn.Module):
         q_feature = self.conv2(semantic_map)
 
         # Stylization
-        B = style_vector.size(0)
+        B = style_vector.size(0) 
         style_matrix = self.style_proj(style_vector).view(B, self.out_channels, 1, 1)
         p_feature = self.conv3(style_matrix * p_feature)
         q_feature = self.conv4(style_matrix * q_feature)
@@ -99,7 +99,8 @@ class SIANResBlk(nn.Module):
     
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
        
-        # Residual path
+        # Residual path 
+        print(semantic_map.shape, style_vector.shape, directional_map.shape, distance_map.shape)
         out = self.sian1(x, semantic_map, style_vector, directional_map, distance_map)
         out = self.relu(out)
         out = self.conv1(out)
