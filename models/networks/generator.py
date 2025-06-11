@@ -81,9 +81,9 @@ class SIANGenerator(BaseNetwork):
         out = self.fc(seg)
         print(f"Initial conv output shape: {out.shape}")
         for block in self.blocks:
-            m = F.interpolate(semantic_map,  size=(self.sh, self.sw), mode='bilinear', align_corners=False)
-            p = F.interpolate(directional_map, size=(self.sh, self.sw), mode='bilinear', align_corners=False)
-            q = F.interpolate(distance_map, size=(self.sh, self.sw), mode='bilinear', align_corners=False)
+            m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
+            p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
+            q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
             out = block(out, m, z, p, q)
             sh = sh * 2
             sw = sw * 2
