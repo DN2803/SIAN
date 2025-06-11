@@ -42,7 +42,7 @@ class SIANNorm(nn.Module):
 
         # Stylization
         B = style_vector.size(0) 
-        style_matrix = self.style_proj(style_vector).view(B, self.out_channels, 1, 1)
+        style_matrix = self.style_proj(style_vector).view(B, self.conv_c, 1, 1)
         p_feature = self.conv3(style_matrix * p_feature)
         q_feature = self.conv4(style_matrix * q_feature)
 
@@ -65,9 +65,9 @@ class SIANNorm(nn.Module):
         # Normalize and modulate
         x = self.input_proj(input)  # Project input to 128 channels if needed
         x_norm = self.instance_norm(x)
-        # print("x_norm shape:", x_norm.shape)
-        # print("gamma shape:", gamma.shape)
-        # print("beta shape:", beta.shape)
+        print("x_norm shape:", x_norm.shape)
+        print("gamma shape:", gamma.shape)
+        print("beta shape:", beta.shape)
         out = gamma * x_norm + beta
         return out
 
