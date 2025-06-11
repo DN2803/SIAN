@@ -95,4 +95,4 @@ class SIANGenerator(BaseNetwork):
 
         sw = opt.crop_size // (2**num_up_layer)
         sh = round(sw / opt.aspect_ratio)
-    
+        return sw, sh
