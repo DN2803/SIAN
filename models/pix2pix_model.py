@@ -64,7 +64,7 @@ class Pix2PixModel(torch.nn.Module):
             return mu, logvar
         elif mode == 'inference':
             with torch.no_grad():
-                fake_image, _ = self.generate_fake(input_semantics, real_image)
+                fake_image, _, _ = self.generate_fake(input_semantics, real_image)
             del input_semantics, real_image, semantic_map, directional_map, distance_map, inst_map
             gc.collect()
             torch.cuda.empty_cache()
@@ -190,7 +190,7 @@ class Pix2PixModel(torch.nn.Module):
 
         G_losses.update(loss_dict)
         G_losses['Total'] = total_loss
-        
+
 
         return G_losses, fake_image
 
