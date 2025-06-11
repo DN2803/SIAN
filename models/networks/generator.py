@@ -73,6 +73,7 @@ class SIANGenerator(BaseNetwork):
             mu, logvar = self.encoder(real_image)
             z = self.reparameterize(mu, logvar)
         # input
+        sh, sw = self.sh, self.sw
         seg = F.interpolate(seg, size=(self.sh, self.sw))
         m = semantic_map
         p = directional_map
@@ -84,8 +85,8 @@ class SIANGenerator(BaseNetwork):
             p = F.interpolate(directional_map, size=(self.sh, self.sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(self.sh, self.sw), mode='bilinear', align_corners=False)
             out = block(out, m, z, p, q)
-            self.sh = self.sh*2
-            self.sw = self.sw*2
+            sh = sh * 2
+            sw = sw * 2
         out = self.final_conv(out)
         return torch.tanh(out)
     def reparameterize(self, mu, logvar):
