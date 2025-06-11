@@ -61,10 +61,13 @@ class SIANNorm(nn.Module):
 
         gamma = gamma_i + gamma_j
         beta = beta_i + beta_j
-
+        
         # Normalize and modulate
         x = self.input_proj(input)  # Project input to 128 channels if needed
         x_norm = self.instance_norm(x)
+        print("x_norm shape:", x_norm.shape)
+        print("gamma shape:", gamma.shape)
+        print("beta shape:", beta.shape)
         out = gamma * x_norm + beta
         return out
 
