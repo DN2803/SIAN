@@ -198,7 +198,7 @@ class Pix2PixModel(torch.nn.Module):
     def compute_discriminator_loss(self, input_semantics, real_image, semantic_map, directional_map, distance_map):
         D_losses = {}
         with torch.no_grad():
-            fake_image, _ = self.generate_fake(input_semantics, semantic_map, directional_map, distance_map, real_image)
+            fake_image, _, _ = self.generate_fake(input_semantics, semantic_map, directional_map, distance_map, real_image)
             fake_image = fake_image.detach()
             # fake_image.requires_grad_()
 
