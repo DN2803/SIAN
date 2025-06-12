@@ -81,7 +81,7 @@ class SIANGenerator(BaseNetwork):
             # x = F.interpolate(seg, size=(self.sh, self.sw))
             # x = self.fc(x)
         x = z
-        print(z)
+        print("z:", z.mean(), z.min(), z.max())
         # input
         sh, sw = self.sh, self.sw
         seg = F.interpolate(seg, size=(self.sh, self.sw))  # 2 x 2 x 3
@@ -102,7 +102,7 @@ class SIANGenerator(BaseNetwork):
             # print(out.shape)
         out = self.final_conv(out)
         # print(out)
-        return torch.tanh(out)
+        return out #  torch.tanh(out)
     def compute_latent_vector_size(self, opt):
         num_up_layer = opt.num_blocks
 
