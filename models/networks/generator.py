@@ -74,12 +74,13 @@ class SIANGenerator(BaseNetwork):
             if z is None:
                 z = torch.randn(input.size(0), self.opt.z_dim,
                                 dtype=torch.float32, device=input.get_device())
-            x = self.fc(z)
-            x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
-        else:
+            # x = self.fc(z)
+            # x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+        # else:
             # we downsample segmap and run convolution
-            x = F.interpolate(seg, size=(self.sh, self.sw))
-            x = self.fc(x)
+            # x = F.interpolate(seg, size=(self.sh, self.sw))
+            # x = self.fc(x)
+        x = z
 
         # input
         sh, sw = self.sh, self.sw
@@ -97,7 +98,7 @@ class SIANGenerator(BaseNetwork):
             out = up_block(out)
             sh = sh * 2
             sw = sw * 2
-            x = x.view(-1, out.shape[1], sh, sw)
+            # x = x.view(-1, out.shape[1], sh, sw)
             # print(out.shape)
         out = self.final_conv(out)
         return torch.tanh(out)
