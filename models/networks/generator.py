@@ -94,11 +94,12 @@ class SIANGenerator(BaseNetwork):
         q = distance_map
         out = self.fc(seg)
         # print(f"Initial conv output shape: {out.shape}")
-        for block in self.blocks:
+        for block, up_block in enumerate(self.sian_blocks, self.upSamplingBlks):
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
             out = block(out, m, z, p, q)
+            out = up_block(out)
             sh = sh * 2
             sw = sw * 2
         out = self.final_conv(out)
