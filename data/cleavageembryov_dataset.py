@@ -53,7 +53,7 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         distance_path = os.path.join(self.distance_dir, f'{inst_name}.npy')
         image_path = os.path.join(self.image_dir, f'{inst_name}.png')
 
-        semantic_map = self.resize_map(semantic_path)
+        semantic_map = self.resize_map(semantic_path, False)
         distance_map = self.resize_map(distance_path)
         direction_map = self.resize_map(direction_path)
          # input image (real images)
@@ -91,10 +91,16 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         image_dir = os.path.join(root, f'{phase}_image')
         return instance_dir, semantic_dir, direction_dir, distance_dir, image_dir
     # Load và chuyển về tensor, thêm batch dim (1, C, H, W), resize, rồi bỏ batch dim
-    def resize_map(self, np_path):
+    def resize_map(self, np_path, normalize=True):
         map_tensor = torch.from_numpy(np.load(np_path)).float()
         if len(map_tensor.shape) == 2:  # (H, W)
             map_tensor = map_tensor.unsqueeze(0)  # (1, H, W)
         map_tensor = map_tensor.unsqueeze(0)  # (1, C, H, W)
         map_tensor = F.interpolate(map_tensor, size=(self.opt.load_size, self.opt.load_size), mode='bilinear', align_corners=False)
+        if normalize:  # normalize
+            mean = map_tensor.mean(dim=(1, 2), keepdim=True)
+            std = map_tensor.std(dim=(1, 2), keepdim=True)
+            std[std == 0] = 1e-6
+            map_tensor = (map_tensor - mean) / std
+
         return map_tensor.squeeze(0)  # (C, H, W)
