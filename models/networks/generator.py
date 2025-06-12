@@ -81,7 +81,7 @@ class SIANGenerator(BaseNetwork):
             # x = F.interpolate(seg, size=(self.sh, self.sw))
             # x = self.fc(x)
         x = z
-
+        print(z)
         # input
         sh, sw = self.sh, self.sw
         seg = F.interpolate(seg, size=(self.sh, self.sw))  # 2 x 2 x 3
