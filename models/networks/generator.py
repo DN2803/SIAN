@@ -46,7 +46,7 @@ class SIANGenerator(BaseNetwork):
         else:
             # Otherwise, we make the network deterministic by starting with
             # downsampled segmentation map instead of random z
-            self.fc = nn.Conv2d(self.opt.input_nc, 16 * nf, 3, padding=1)
+            self.fc = nn.Conv2d(opt.input_nc, 16 * nf, 3, padding=1)
 
         self.encoder = ConvEncoder(opt)
 
