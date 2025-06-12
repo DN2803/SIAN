@@ -72,17 +72,17 @@ class SIANNorm(nn.Module):
         return out
 
 class UpsampleBlock(nn.Module):
-  def __init__(self, in_channels, up_scale):
-    super(UpsampleBlock, self).__init__()
-    self.conv = nn.Conv2d(in_channels, in_channels * up_scale ** 2,
-                          kernel_size=3, padding=1)
-    self.pixel_shuffle = nn.PixelShuffle(up_scale)
-    self.prelu = nn.PReLU()
-  def forward(self, x):
-    x = self.conv(x)
-    x = self.pixel_shuffle(x)
-    x = self.prelu(x)
-    return x
+    def __init__(self, in_channels, up_scale):
+        super(UpsampleBlock, self).__init__()
+        self.upsample = nn.Upsample(scale_factor=up_scale, mode='bilinear', align_corners=False)
+        self.conv = nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1)
+        self.activation = nn.PReLU()
+
+    def forward(self, x):
+        x = self.upsample(x)
+        x = self.conv(x)
+        x = self.activation(x)
+        return x
 
 class SIANResBlk(nn.Module):
     def __init__(self, in_channels, out_channels, 
