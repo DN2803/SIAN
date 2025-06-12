@@ -96,13 +96,12 @@ class SIANGenerator(BaseNetwork):
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
             out = block(out, m, x, p, q)
             out = up_block(out)
-            print(f"After block {block}: output shape: {out.shape}")
-            print(out)
             sh = sh * 2
             sw = sw * 2
             # x = x.view(-1, out.shape[1], sh, sw)
             # print(out.shape)
         out = self.final_conv(out)
+        print(out)
         return torch.tanh(out)
     def compute_latent_vector_size(self, opt):
         num_up_layer = opt.num_blocks
