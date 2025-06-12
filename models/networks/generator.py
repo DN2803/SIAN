@@ -34,7 +34,7 @@ class SIANGenerator(BaseNetwork):
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
-        
+        self.fc0 = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
         if opt.use_vae:
             # In case of VAE, we will sample from random z vector
             self.fc = nn.Linear(self.opt.z_dim, 16 * nf * self.sw * self.sh)
@@ -83,11 +83,11 @@ class SIANGenerator(BaseNetwork):
 
         # input
         sh, sw = self.sh, self.sw
-        seg = F.interpolate(seg, size=(self.sh, self.sw))
+        seg = F.interpolate(seg, size=(self.sh, self.sw))  # 2 x 2 x 3
         m = semantic_map
         p = directional_map
         q = distance_map
-        out = self.fc(seg)
+        out = self.fc0(seg)  # 2 x 2 x 1024
         # print(f"Initial conv output shape: {out.shape}")
         for block, up_block in zip(self.sian_blocks, self.upSamplingBlks):
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
