@@ -65,9 +65,9 @@ class SIANNorm(nn.Module):
         # Normalize and modulate
         # x = self.input_proj(input)  # Project input to ith layer channels if needed
         x_norm = self.instance_norm(input)
-        print("x_norm shape:", x_norm.shape)
-        print("gamma shape:", gamma.shape)
-        print("beta shape:", beta.shape)
+        # print("x_norm shape:", x_norm.shape)
+        # print("gamma shape:", gamma.shape)
+        # print("beta shape:", beta.shape)
         out = gamma * x_norm + beta
         return out
 
@@ -128,7 +128,7 @@ class SIANResBlk(nn.Module):
         skip = self.conv_skip(skip)
         out =  out + skip 
 
-        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
+        # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
         return out
     
     

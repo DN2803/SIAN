@@ -78,7 +78,7 @@ class SIANGenerator(BaseNetwork):
         
 
         # Conv cuối để ra ảnh RGB 3 channel
-        self.final_conv = nn.Conv2d(channels[-1], 3, kernel_size=3, padding=1)
+        self.final_conv = nn.Conv2d(channels[-1] // 2, 3, kernel_size=1, padding=1)
     
     def forward(self, input, semantic_map, directional_map, distance_map, real_image=None, z=None):
         seg = input 
@@ -102,7 +102,7 @@ class SIANGenerator(BaseNetwork):
             out = up_block(out)
             sh = sh * 2
             sw = sw * 2
-            print(out.shape)
+            # print(out.shape)
         out = self.final_conv(out)
         return torch.tanh(out)
     def reparameterize(self, mu, logvar):
