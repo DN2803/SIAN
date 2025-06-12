@@ -23,7 +23,7 @@ class SIANGenerator(BaseNetwork):
 
     def __init__(self, opt):
         super().__init__()
-        
+        self.opt = opt
         self.num_blocks = opt.num_blocks
         
         # Thiết lập dải channel (có thể điều chỉnh) 
@@ -35,28 +35,19 @@ class SIANGenerator(BaseNetwork):
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
         
-        # Khởi tạo convolution đầu vào, giả sử đầu vào có semantic_nc channel
-        # if (opt.use_vae):
-        #     self.fc = nn.Linear(opt.z_dim,  channels[0] * self.sw *self.sh)
-        # else:
-        #     self.fc = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
         if opt.use_vae:
             # In case of VAE, we will sample from random z vector
-            self.fc = nn.Linear(opt.z_dim, 16 * nf * self.sw * self.sh)
+            self.fc = nn.Linear(self.opt.z_dim, 16 * nf * self.sw * self.sh)
         else:
             # Otherwise, we make the network deterministic by starting with
             # downsampled segmentation map instead of random z
-            self.fc = nn.Conv2d(opt.input_nc, 16 * nf, 3, padding=1)
-
-        self.encoder = ConvEncoder(opt)
-
-        self.mask_generator = MaskProcessorModel()
+            self.fc = nn.Conv2d(self.opt.input_nc, 16 * nf, 3, padding=1)
         
         # Tạo dãy SIANResBlk
+        self.fcs = nn.ModuleList()
         self.sian_blocks = nn.ModuleList()
         self.upSamplingBlks = nn.ModuleList()
         for in_c in channels:
-           
             # print(f"Adding SIANResBlk with in_channels={in_c}, out_channels={out_c}")
             self.sian_blocks.append(
                 SIANResBlk(
@@ -71,21 +62,25 @@ class SIANGenerator(BaseNetwork):
             self.upSamplingBlks.append(
                 UpsampleBlock(in_c, 2)
             )
-        
-        
-
-        
-        
 
         # Conv cuối để ra ảnh RGB 3 channel
         self.final_conv = nn.Conv2d(channels[-1] // 2, 3, kernel_size=1, padding=0)
     
-    def forward(self, input, semantic_map, directional_map, distance_map, real_image=None, z=None):
+    def forward(self, input, semantic_map, directional_map, distance_map, z=None):
         seg = input 
-        # Nếu z (style latent) không được truyền vào, tự sinh từ real_image
-        if z is None and real_image is not None:
-            mu, logvar = self.encoder(real_image)
-            z = self.reparameterize(mu, logvar)
+
+        if self.opt.use_vae:
+            # we sample z from unit normal and reshape the tensor
+            if z is None:
+                z = torch.randn(input.size(0), self.opt.z_dim,
+                                dtype=torch.float32, device=input.get_device())
+            x = self.fc(z)
+            x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+        else:
+            # we downsample segmap and run convolution
+            x = F.interpolate(seg, size=(self.sh, self.sw))
+            x = self.fc(x)
+
         # input
         sh, sw = self.sh, self.sw
         seg = F.interpolate(seg, size=(self.sh, self.sw))
@@ -98,22 +93,14 @@ class SIANGenerator(BaseNetwork):
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
-            out = block(out, m, z, p, q)
+            out = block(out, m, x, p, q)
             out = up_block(out)
             sh = sh * 2
             sw = sw * 2
+            x = x.view(-1, out.shape[1], sh, sw)
             # print(out.shape)
         out = self.final_conv(out)
         return torch.tanh(out)
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-    def extract_style(self, real_image, use_mu_only=True):
-        mu, logvar = self.encoder(real_image)
-        if use_mu_only:
-            return mu
-        return mu, logvar, self.reparameterize(mu, logvar)
     def compute_latent_vector_size(self, opt):
         num_up_layer = opt.num_blocks
 

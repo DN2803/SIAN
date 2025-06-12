@@ -152,8 +152,7 @@ class SIANLoss(nn.Module):
         self.lambda_kld = lambda_kld
         self.lambda_reg = lambda_reg  # style consistency
 
-    def forward(self, pred_fake, pred_real, real_img, fake_img,
-                mu, logvar, style_real, style_fake, mask):
+    def forward(self, style_fake, style_real, real_img, fake_img, mask):
         
         # GAN loss (Generator)
         # loss_gan = self.gan_loss(pred_fake, pred_real, for_discriminator=False)
@@ -170,18 +169,15 @@ class SIANLoss(nn.Module):
         # Style regularization loss
         loss_reg = self.l1_loss(style_fake, style_real)
 
-        # KL Divergence loss
-        loss_kld = self.kld_loss(mu, logvar)
-
+        
         # Tổng hợp loss
         total_loss = self.lambda_f * loss_f + \
-                     self.lambda_p * loss_p + self.lambda_reg * loss_reg + \
-                     self.lambda_kld * loss_kld
+                     self.lambda_p * loss_p + self.lambda_reg * loss_reg 
+                     
 
         return total_loss, {
             # 'GAN': loss_gan.item(),
             'VGG': loss_f.item(),
             'Patch': loss_p.item(),
             'StyleReg': loss_reg.item(),
-            'KLD': loss_kld.item()
         }

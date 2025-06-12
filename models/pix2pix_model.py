@@ -172,23 +172,22 @@ class Pix2PixModel(torch.nn.Module):
             fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image)
             # print(fake_image.shape)
         pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
-        # fake_image, KLD_loss = self.generate_fake(
-        #     input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
+        fake_image, KLD_loss = self.generate_fake(
+            input_semantics, semantic_map, directional_map, distance_map, real_image, compute_kld_loss=self.opt.use_vae)
 
-        # if self.opt.use_vae:
-        #     G_losses['KLD'] = KLD_loss
+        if self.opt.use_vae:
+            G_losses['KLD'] = KLD_loss
         G_losses['GAN'] = self.criterionGAN(pred_fake, True,
                                             for_discriminator=False)
-        # Style vector (giả sử được trích xuất từ G)
-        mu, logvar, style_real = self.netG.extract_style(real_image, False)  # hoặc một hàm style encoder riêng
-        _, _, style_fake = self.netG.extract_style(fake_image, False)
+        # # Style vector (giả sử được trích xuất từ G)
+        style_real, _, _ = self.encode_z(real_image)  # hoặc một hàm style encoder riêng
+        style_fake, _, _ = self.encode_z(fake_image)
 
         # Mask instance map (để tính patch loss)
         mask = inst_map  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
         # compute SIAN loss
         total_loss, loss_dict = self.criterionSIAN(
-            pred_fake, pred_real, real_image, fake_image,
-            mu, logvar, style_real, style_fake, mask
+            style_real, style_fake, real_image, fake_image, mask
         )
 
         G_losses.update(loss_dict)
@@ -203,7 +202,7 @@ class Pix2PixModel(torch.nn.Module):
         with torch.no_grad():
             fake_image, _, _ = self.generate_fake(input_semantics, semantic_map, directional_map, distance_map, real_image)
             fake_image = fake_image.detach()
-            # fake_image.requires_grad_()
+            fake_image.requires_grad_()
 
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image, real_image)
@@ -221,11 +220,17 @@ class Pix2PixModel(torch.nn.Module):
         return z, mu, logvar
 
     def generate_fake(self, input_semantics, semantic_map, directional_map, distance_map, real_image, compute_kld_loss=False):
-        z, mu, logvar = None, None, None
+        z = None
+        KLD_loss = None
         if self.opt.use_vae:
             z, mu, logvar = self.encode_z(real_image)
-        fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image, z=z)
-        return fake_image, mu, logvar
+            if compute_kld_loss:
+                    KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
+        fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, z=z)
+
+        assert (not compute_kld_loss) or self.opt.use_vae, \
+                "You cannot compute KLD loss if opt.use_vae == False"
+        return fake_image, KLD_loss
     
     # Given fake and real image, return the prediction of discriminator
     # for each fake and real image.
