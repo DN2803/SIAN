@@ -137,7 +137,7 @@ class InstancePerceptualLoss(nn.Module):
 class SIANLoss(nn.Module):
     def __init__(self, opt):
         super(SIANLoss, self).__init__()
-        self.gan_loss = GANLoss(opt.gan_mode, tensor=torch.cuda.FloatTensor, opt=opt)
+        # self.gan_loss = GANLoss(opt.gan_mode, tensor=torch.cuda.FloatTensor, opt=opt)
         self.vgg_loss = VGGLoss(opt.gpu_ids)
         self.kld_loss = KLDLoss()
         self.instance_perceptual_loss = InstancePerceptualLoss()
@@ -156,7 +156,7 @@ class SIANLoss(nn.Module):
                 mu, logvar, style_real, style_fake, mask):
         
         # GAN loss (Generator)
-        loss_gan = self.gan_loss(pred_fake, pred_real, for_discriminator=False)
+        # loss_gan = self.gan_loss(pred_fake, pred_real, for_discriminator=False)
 
         # Feature matching loss in discriminator
         loss_f = self.vgg_loss(fake_img, real_img)
@@ -174,12 +174,12 @@ class SIANLoss(nn.Module):
         loss_kld = self.kld_loss(mu, logvar)
 
         # Tổng hợp loss
-        total_loss = loss_gan + self.lambda_f * loss_f + \
+        total_loss = self.lambda_f * loss_f + \
                      self.lambda_p * loss_p + self.lambda_reg * loss_reg + \
                      self.lambda_kld * loss_kld
 
         return total_loss, {
-            'GAN': loss_gan.item(),
+            # 'GAN': loss_gan.item(),
             'VGG': loss_f.item(),
             'Patch': loss_p.item(),
             'StyleReg': loss_reg.item(),

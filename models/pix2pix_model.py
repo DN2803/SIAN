@@ -177,7 +177,8 @@ class Pix2PixModel(torch.nn.Module):
 
         # if self.opt.use_vae:
         #     G_losses['KLD'] = KLD_loss
-
+        G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+                                            for_discriminator=False)
         # Style vector (giả sử được trích xuất từ G)
         mu, logvar, style_real = self.netG.extract_style(real_image, False)  # hoặc một hàm style encoder riêng
         _, _, style_fake = self.netG.extract_style(fake_image, False)
@@ -191,7 +192,7 @@ class Pix2PixModel(torch.nn.Module):
         )
 
         G_losses.update(loss_dict)
-        G_losses['Total'] = total_loss
+        G_losses['SIAN'] = total_loss
 
 
         return G_losses, fake_image

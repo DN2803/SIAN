@@ -85,15 +85,15 @@ class SIANResBlk(nn.Module):
         self.out_channels = out_channels
         
         # 2 SIAN blocks
-        self.sian1 = SIANNorm(in_channels, out_channels,  semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv1 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.sian1 = SIANNorm(in_channels, in_channels,  semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1)
         
-        self.sian2 = SIANNorm(out_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.sian2 = SIANNorm(in_channels, in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1)
         
         # Skip connection
-        self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv_skip = nn.Conv2d(out_channels, out_channels, kernel_size=1, padding=0)
+        self.sian_skip = SIANNorm(in_channels, in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
+        self.conv_skip = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
         
         self.relu = nn.ReLU(inplace=True)
 
@@ -120,7 +120,7 @@ class SIANResBlk(nn.Module):
         if self.upsample:
             out = F.interpolate(out, scale_factor=2, mode='nearest')
 
-        # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
+        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
         return out
     
     
