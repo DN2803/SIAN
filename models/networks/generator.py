@@ -102,6 +102,7 @@ class SIANGenerator(BaseNetwork):
             out = up_block(out)
             sh = sh * 2
             sw = sw * 2
+            print(out.shape)
         out = self.final_conv(out)
         return torch.tanh(out)
     def reparameterize(self, mu, logvar):
