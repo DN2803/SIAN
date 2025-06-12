@@ -170,7 +170,7 @@ class Pix2PixModel(torch.nn.Module):
             fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image, z=z)
         else:
             fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, real_image)
-
+            print(fake_image.shape)
         pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
         # fake_image, KLD_loss = self.generate_fake(
         #     input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
