@@ -65,9 +65,9 @@ class SIANNorm(nn.Module):
         # Normalize and modulate
         # x = self.input_proj(input)  # Project input to ith layer channels if needed
         x_norm = self.instance_norm(input)
-        # print("x_norm shape:", x_norm.shape)
-        # print("gamma shape:", gamma.shape)
-        # print("beta shape:", beta.shape)
+        print("x_norm shape:", x_norm.shape, x_norm.mean(), x_norm.min(), x_norm.max())
+        print("gamma shape:", gamma.shape, gamma.mean(), gamma.min(), gamma.max())
+        print("beta shape:", beta.shape, beta.mean(), beta.min(), beta.max())
         out = gamma * x_norm + beta
         return out
 
@@ -131,7 +131,7 @@ class SIANResBlk(nn.Module):
         # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
         return out
     
-    
+
 # VGG architecter, used for the perceptual loss using a pretrained VGG network
 class VGG19(torch.nn.Module):
     def __init__(self, requires_grad=False):
