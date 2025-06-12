@@ -164,17 +164,17 @@ class Pix2PixModel(torch.nn.Module):
 
         G_losses = {}
         # Tạo ảnh giả và mã hóa z nếu cần
-        fake_image, mu, logvar = None, None, None
-        if self.opt.use_vae:
-            z, mu, logvar = self.encode_z(real_image)
-            fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, z=z)
-        else:
-            fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map)
-            # print(fake_image.shape)
-        pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
+        # fake_image, mu, logvar = None, None, None
+        # if self.opt.use_vae:
+        #     z, mu, logvar = self.encode_z(real_image)
+        #     fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map, z=z)
+        # else:
+        #     fake_image = self.netG(input_semantics, semantic_map, directional_map, distance_map)
+        #     # print(fake_image.shape)
+
         fake_image, KLD_loss = self.generate_fake(
             input_semantics, semantic_map, directional_map, distance_map, real_image, compute_kld_loss=self.opt.use_vae)
-
+        pred_fake, pred_real = self.discriminate(input_semantics, fake_image, real_image)
         if self.opt.use_vae:
             G_losses['KLD'] = KLD_loss
         G_losses['GAN'] = self.criterionGAN(pred_fake, True,
@@ -187,7 +187,7 @@ class Pix2PixModel(torch.nn.Module):
         mask = inst_map  # bạn cần định nghĩa hàm này hoặc lấy từ data['instance']
         # compute SIAN loss
         total_loss, loss_dict = self.criterionSIAN(
-            style_real, style_fake, real_image, fake_image, mask
+            style_fake, style_real, real_image, fake_image, mask
         )
 
         G_losses.update(loss_dict)
