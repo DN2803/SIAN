@@ -33,7 +33,7 @@ class SIANNorm(nn.Module):
         self.instance_norm = nn.InstanceNorm2d(out_channels, affine=False)
 
         # Project input if needed
-        self.input_proj = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels else nn.Identity()
+        # self.input_proj = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels else nn.Identity()
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
         # Semantization
@@ -63,21 +63,31 @@ class SIANNorm(nn.Module):
         beta = beta_i + beta_j
         
         # Normalize and modulate
-        x = self.input_proj(input)  # Project input to 128 channels if needed
-        x_norm = self.instance_norm(x)
-        # print("x_norm shape:", x_norm.shape)
-        # print("gamma shape:", gamma.shape)
-        # print("beta shape:", beta.shape)
+        # x = self.input_proj(input)  # Project input to ith layer channels if needed
+        x_norm = self.instance_norm(input)
+        print("x_norm shape:", x_norm.shape)
+        print("gamma shape:", gamma.shape)
+        print("beta shape:", beta.shape)
         out = gamma * x_norm + beta
         return out
 
-
+class UpsampleBlock(nn.Module):
+  def __init__(self, in_channels, up_scale):
+    super(UpsampleBlock, self).__init__()
+    self.conv = nn.Conv2d(in_channels, in_channels * up_scale ** 2,
+                          kernel_size=3, padding=1)
+    self.pixel_shuffle = nn.PixelShuffle(up_scale)
+    self.prelu = nn.PReLU()
+  def forward(self, x):
+    x = self.conv(x)
+    x = self.pixel_shuffle(x)
+    x = self.prelu(x)
+    return x
 
 class SIANResBlk(nn.Module):
     def __init__(self, in_channels, out_channels, 
                  semantic_nc, style_dim, 
-                 directional_nc, distance_nc,
-                 upsample=True):
+                 directional_nc, distance_nc):
         super().__init__()
         
         
@@ -86,18 +96,18 @@ class SIANResBlk(nn.Module):
         
         # 2 SIAN blocks
         self.sian1 = SIANNorm(in_channels, in_channels,  semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1)
         
         self.sian2 = SIANNorm(in_channels, in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(out_channels, in_channels, kernel_size=3, padding=1)
         
         # Skip connection
         self.sian_skip = SIANNorm(in_channels, in_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv_skip = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
+        self.conv_skip = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
         
         self.relu = nn.ReLU(inplace=True)
 
-        self.upsample = upsample
+        
 
     
     def forward(self, x, semantic_map, style_vector, directional_map, distance_map):
@@ -117,8 +127,6 @@ class SIANResBlk(nn.Module):
         skip = self.relu(skip)
         skip = self.conv_skip(skip)
         out =  out + skip 
-        if self.upsample:
-            out = F.interpolate(out, scale_factor=2, mode='nearest')
 
         print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
         return out
