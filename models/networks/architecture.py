@@ -36,9 +36,19 @@ class SIANNorm(nn.Module):
         # self.input_proj = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels else nn.Identity()
 
     def forward(self, input, semantic_map, style_vector, directional_map, distance_map):
+
+        print("Semantic map shape:", semantic_map.shape, semantic_map.mean(), semantic_map.min(), semantic_map.max())
+        print("Style vector shape:", style_vector.shape, style_vector.mean(), style_vector.min(), style_vector.max())
+        print("Directional map shape:", directional_map.shape, directional_map.mean(), directional_map.min(), directional_map.max())
+        print("Distance map shape:", distance_map.shape, distance_map.mean(), distance_map.min(), distance_map.max())
         # Semantization
         p_feature = self.conv1(semantic_map)
         q_feature = self.conv2(semantic_map)
+
+        print("p_feature shape:", p_feature.shape, p_feature.mean(), p_feature.min(), p_feature.max())
+        print("q_feature shape:", q_feature.shape, q_feature.mean(), q_feature.min(), q_feature.max())
+
+
 
         # Stylization
         B = style_vector.size(0) 
