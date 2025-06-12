@@ -29,7 +29,7 @@ class SIANGenerator(BaseNetwork):
         # Thiết lập dải channel (có thể điều chỉnh) 
         # Cấu hình kênh tương ứng với từng SIANResBlk (giảm dần)
         nf = opt.ngf
-        channels = [nf * 16, nf * 16, nf * 8, nf * 4, nf * 2, nf, nf // 2]
+        channels = [nf * 16, nf * 8, nf * 4, nf * 2, nf, nf // 2, nf // 4]
         
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
