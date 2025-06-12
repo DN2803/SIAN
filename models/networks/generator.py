@@ -65,8 +65,7 @@ class SIANGenerator(BaseNetwork):
                     semantic_nc=opt.semantic_nc,           # = 1
                     style_dim=opt.z_dim,               # = 256
                     directional_nc=opt.directional_nc,     # = 1
-                    distance_nc=opt.distance_nc,           # = 1
-                    upsample=True
+                    distance_nc=opt.distance_nc          # = 1
                 )
             )
             self.upSamplingBlks.append(
