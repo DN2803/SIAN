@@ -128,7 +128,7 @@ class SIANResBlk(nn.Module):
         skip = self.conv_skip(skip)
         out =  out + skip 
 
-        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, upsample={self.upsample}, out_shape={out.shape}")
+        print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
         return out
     
     
