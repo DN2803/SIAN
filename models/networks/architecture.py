@@ -95,7 +95,8 @@ class UpsampleBlock(nn.Module):
 class SIANResBlk(nn.Module):
     def __init__(self, in_channels, out_channels, 
                  semantic_nc, style_dim, 
-                 directional_nc, distance_nc):
+                 directional_nc, distance_nc, 
+                 upsameple=False):
         super().__init__()
         
         # Initialize parameters
@@ -127,7 +128,10 @@ class SIANResBlk(nn.Module):
             self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)      
         
         self.relu = nn.LeakyReLU(inplace=True)
-
+        self.upsample = upsameple
+        if upsameple:
+            # If upsampling is needed, add an upsample block
+            self.upsampleBlk = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         
 
     
@@ -151,6 +155,9 @@ class SIANResBlk(nn.Module):
             out =  out + skip 
 
         # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
+        if self.upsample:
+            out = self.upsampleBlk(out)
+            # print(f"After upsampling: out_shape={out.shape}")
         return out
     
 

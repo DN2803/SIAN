@@ -30,7 +30,7 @@ class SIANGenerator(BaseNetwork):
         # Cấu hình kênh tương ứng với từng SIANResBlk (giảm dần)
         nf = opt.ngf
         channels = [nf * 16, nf * 8, nf * 4, nf * 2, nf, nf // 2, nf // 4]
-        
+        channel_pairs = list(zip(channels[:-1], channels[1:]))
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
@@ -46,22 +46,23 @@ class SIANGenerator(BaseNetwork):
         
         # Tạo dãy SIANResBlk
         self.sian_blocks = nn.ModuleList()
-        self.upSamplingBlks = nn.ModuleList()
-        for in_c in channels:
+        # self.upSamplingBlks = nn.ModuleList()
+        for in_c, out_c in channel_pairs:
             # print(f"Adding SIANResBlk with in_channels={in_c}, out_channels={out_c}")
             self.sian_blocks.append(
                 SIANResBlk(
                     in_channels=in_c,
-                    out_channels=in_c,
+                    out_channels=out_c,
                     semantic_nc=opt.semantic_nc,           # = 1
                     style_dim=opt.z_dim,               # = 256
                     directional_nc=opt.directional_nc,     # = 1
-                    distance_nc=opt.distance_nc          # = 1
+                    distance_nc=opt.distance_nc,         # = 1
+                    upsample = True
                 )
             )
-            self.upSamplingBlks.append(
-                UpsampleBlock(in_c, 2)
-            )
+            # self.upSamplingBlks.append(
+            #     UpsampleBlock(in_c, 2)
+            # )
 
         # Conv cuối để ra ảnh RGB 3 channel
         self.final_conv = nn.Conv2d(channels[-1] // 2, 3, kernel_size=1, padding=0)
@@ -88,12 +89,13 @@ class SIANGenerator(BaseNetwork):
         q = distance_map
         out = x 
         # print(f"Initial conv output shape: {out.shape}")
-        for block, up_block in zip(self.sian_blocks, self.upSamplingBlks):
+        # for block, up_block in zip(self.sian_blocks, self.upSamplingBlks):
+        for block in self.sian_blocks:
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
             out = block(out, m, z, p, q)
-            out = up_block(out)
+            # out = up_block(out)
             sh = sh * 2
             sw = sw * 2
             # x = x.view(-1, out.shape[1], sh, sw)
