@@ -6,7 +6,7 @@ import torchvision
 class SIANNorm(nn.Module):
     def __init__(self, in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc):
         super(SIANNorm, self).__init__()
-        self.conv_c = 128  # Cố định số kênh output trung gian
+        self.conv_c = in_channels # Cố định số kênh output trung gian
 
         # Semantization
         self.conv1 = nn.Conv2d(semantic_nc, self.conv_c, kernel_size=3, padding=1)
@@ -98,22 +98,35 @@ class SIANResBlk(nn.Module):
                  directional_nc, distance_nc):
         super().__init__()
         
+        # Initialize parameters
+
+        self.skip = (in_channels != out_channels)
         
         self.in_channels = in_channels
         self.out_channels = out_channels
+
+        self.f_middle = min(in_channels, out_channels) 
+
+        # create conv layers
+        self.conv1 = nn.Conv2d(in_channels, self.f_middle, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d( self.f_middle, out_channels, kernel_size=3, padding=1)
+        if self.skip:
+            # If skip connection is needed, create a conv layer to match dimensions
+            self.conv_skip = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+
+        
         
         # 2 SIAN blocks
         self.sian1 = SIANNorm(in_channels, in_channels,  semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
-        
         self.sian2 = SIANNorm(out_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
         
-        # Skip connection
-        self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)
-        self.conv_skip = nn.Conv2d(out_channels, out_channels, kernel_size=1, padding=0)
         
-        self.relu = nn.ReLU(inplace=True)
+        if self.skip:
+            # If skip connection is needed, create a SIAN block for the skip path
+            # This will ensure the skip connection has the same output channels
+            self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)      
+        
+        self.relu = nn.LeakyReLU(inplace=True)
 
         
 
@@ -131,10 +144,11 @@ class SIANResBlk(nn.Module):
         out = self.conv2(out)
         
         # Skip connection path
-        skip = self.sian_skip(x, semantic_map, style_vector, directional_map, distance_map)
-        skip = self.relu(skip)
-        skip = self.conv_skip(skip)
-        out =  out + skip 
+        if self.skip:
+            skip = self.sian_skip(x, semantic_map, style_vector, directional_map, distance_map)
+            skip = self.relu(skip)
+            skip = self.conv_skip(skip)
+            out =  out + skip 
 
         # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
         return out
