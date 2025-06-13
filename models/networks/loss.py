@@ -144,12 +144,12 @@ class SIANLoss(nn.Module):
         self.l1_loss = nn.L1Loss()
         lambda_f = 10.0
         lambda_p = 5.0
-        lambda_kld = 0.05
+        # lambda_kld = 0.05
         lambda_reg = 1.0
         # Hệ số lambda (có thể điều chỉnh từ opt hoặc đặt thủ công)
         self.lambda_f = lambda_f      # perceptual
         self.lambda_p = lambda_p      # instance/patch loss
-        self.lambda_kld = lambda_kld
+        # self.lambda_kld = lambda_kld
         self.lambda_reg = lambda_reg  # style consistency
 
     def forward(self, style_fake, style_real, real_img, fake_img, mask):
