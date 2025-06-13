@@ -48,8 +48,6 @@ class SIANNorm(nn.Module):
         # print("p_feature shape:", p_feature.shape, p_feature.mean(), p_feature.min(), p_feature.max())
         # print("q_feature shape:", q_feature.shape, q_feature.mean(), q_feature.min(), q_feature.max())
 
-
-
         # Stylization
         B = style_vector.size(0) 
         style_matrix = self.style_proj(style_vector).view(B, self.conv_c, 1, 1)

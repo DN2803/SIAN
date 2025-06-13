@@ -34,6 +34,7 @@ class SIANGenerator(BaseNetwork):
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
+
         self.fc0 = nn.Conv2d(opt.input_nc, channels[0], kernel_size=3, padding=1)
         if opt.use_vae:
             # In case of VAE, we will sample from random z vector
@@ -44,7 +45,6 @@ class SIANGenerator(BaseNetwork):
             self.fc = nn.Conv2d(self.opt.input_nc, 16 * nf, 3, padding=1)
         
         # Tạo dãy SIANResBlk
-        self.fcs = nn.ModuleList()
         self.sian_blocks = nn.ModuleList()
         self.upSamplingBlks = nn.ModuleList()
         for in_c in channels:
@@ -74,27 +74,25 @@ class SIANGenerator(BaseNetwork):
             if z is None:
                 z = torch.randn(input.size(0), self.opt.z_dim,
                                 dtype=torch.float32, device=input.get_device())
-            # x = self.fc(z)
-            # x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
-        # else:
+            x = self.fc(z)
+            x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+        else:
             # we downsample segmap and run convolution
-            # x = F.interpolate(seg, size=(self.sh, self.sw))
-            # x = self.fc(x)
-        x = z
+            x = F.interpolate(seg, size=(self.sh, self.sw))
+            x = self.fc(x)
         print("z:", z.mean(), z.min(), z.max())
         # input
         sh, sw = self.sh, self.sw
-        seg = F.interpolate(seg, size=(self.sh, self.sw))  # 2 x 2 x 3
         m = semantic_map
         p = directional_map
         q = distance_map
-        out = self.fc0(seg)  # 2 x 2 x 1024
+        out = x 
         # print(f"Initial conv output shape: {out.shape}")
         for block, up_block in zip(self.sian_blocks, self.upSamplingBlks):
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
-            out = block(out, m, x, p, q)
+            out = block(out, m, z, p, q)
             out = up_block(out)
             sh = sh * 2
             sw = sw * 2
