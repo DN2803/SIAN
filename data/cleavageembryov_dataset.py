@@ -92,15 +92,30 @@ class CleavageEmbryovDataset(Pix2pixDataset):
         return instance_dir, semantic_dir, direction_dir, distance_dir, image_dir
     # Load và chuyển về tensor, thêm batch dim (1, C, H, W), resize, rồi bỏ batch dim
     def resize_map(self, np_path, normalize=True):
-        map_tensor = torch.from_numpy(np.load(np_path)).float()
-        if len(map_tensor.shape) == 2:  # (H, W)
+        # Load numpy array và chuyển sang tensor float32
+        map_tensor = torch.from_numpy(np.load(np_path)).float()  # shape: (H, W) hoặc (C, H, W)
+
+        # Đảm bảo tensor có shape (1, C, H, W)
+        if map_tensor.dim() == 2:
             map_tensor = map_tensor.unsqueeze(0)  # (1, H, W)
-        map_tensor = map_tensor.unsqueeze(0)  # (1, C, H, W)
-        map_tensor = F.interpolate(map_tensor, size=(self.opt.load_size, self.opt.load_size), mode='bilinear', align_corners=False)
-        if normalize:  # normalize
-            mean = map_tensor.mean(dim=(1, 2), keepdim=True)
-            std = map_tensor.std(dim=(1, 2), keepdim=True)
-            std[std == 0] = 1e-6
+        if map_tensor.dim() == 3:
+            map_tensor = map_tensor.unsqueeze(0)  # (1, C, H, W)
+
+        # Resize về kích thước chuẩn
+        map_tensor = F.interpolate(
+            map_tensor,
+            size=(self.opt.load_size, self.opt.load_size),
+            mode='bilinear',
+            align_corners=False
+        )
+
+        if normalize:
+            # Tính mean & std theo spatial (H, W) cho từng channel
+            mean = map_tensor.mean(dim=(2, 3), keepdim=True)  # shape: (1, C, 1, 1)
+            std = map_tensor.std(dim=(2, 3), keepdim=True)    # shape: (1, C, 1, 1)
+            std[std == 0] = 1e-6  # tránh chia cho 0
+
+            # Z-score normalization theo từng channel
             map_tensor = (map_tensor - mean) / std
 
-        return map_tensor.squeeze(0)  # (C, H, W)
+        return map_tensor.squeeze(0)  # Trả về shape: (C, H, W)
