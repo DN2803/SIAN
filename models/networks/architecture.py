@@ -125,7 +125,7 @@ class SIANResBlk(nn.Module):
         if self.skip:
             # If skip connection is needed, create a SIAN block for the skip path
             # This will ensure the skip connection has the same output channels
-            self.sian_skip = SIANNorm(in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc)      
+            self.sian_skip = SIANNorm(in_channels, in_channels, semantic_nc, style_dim, directional_nc, distance_nc)      
         
         self.relu = nn.LeakyReLU(inplace=True)
         self.upsample = upsample
