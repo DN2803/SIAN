@@ -29,9 +29,9 @@ class SIANGenerator(BaseNetwork):
         # Thiết lập dải channel (có thể điều chỉnh) 
         # Cấu hình kênh tương ứng với từng SIANResBlk (giảm dần)
         nf = opt.ngf
-        channels = [nf * 16, nf * 8, nf * 4, nf * 2, nf, nf // 2, nf // 4]
+        channels = [nf * 16, nf * 8, nf * 4, nf * 2, nf, nf // 2, nf // 4, nf // 8]
         channel_pairs = list(zip(channels[:-1], channels[1:]))
-        self.sw, self.sh = self.compute_latent_vector_size(opt)
+        self.sw, self.sh = self.compute_latent_vector_size(opt) 
 
         # channels = [512, 512, 256, 256, 128, 128, 64]
 
@@ -91,7 +91,6 @@ class SIANGenerator(BaseNetwork):
         # print(f"Initial conv output shape: {out.shape}")
         # for block, up_block in zip(self.sian_blocks, self.upSamplingBlks):
         for block in self.sian_blocks:
-            print(f"Processing block with input shape: {out.shape}, semantic_map shape: {m.shape}, directional_map shape: {p.shape}, distance_map shape: {q.shape}")
             m = F.interpolate(semantic_map,  size=(sh, sw), mode='bilinear', align_corners=False)
             p = F.interpolate(directional_map, size=(sh, sw), mode='bilinear', align_corners=False)
             q = F.interpolate(distance_map, size=(sh, sw), mode='bilinear', align_corners=False)
