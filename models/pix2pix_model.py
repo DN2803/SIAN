@@ -192,7 +192,7 @@ class Pix2PixModel(torch.nn.Module):
         )
 
         G_losses.update(loss_dict)
-        G_losses['SIAN'] = total_loss
+        # G_losses['SIAN'] = total_loss
 
 
         return G_losses, fake_image

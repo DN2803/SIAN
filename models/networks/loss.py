@@ -177,7 +177,7 @@ class SIANLoss(nn.Module):
 
         return total_loss, {
             # 'GAN': loss_gan.item(),
-            'VGG': loss_f.item(),
-            'Patch': loss_p.item(),
-            'StyleReg': loss_reg.item(),
+            'VGG': self.lambda_f * loss_f.item(),
+            'Patch': self.lambda_p * loss_p.item(),
+            'StyleReg': self.lambda_reg * loss_reg.item(),
         }
