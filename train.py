@@ -34,13 +34,19 @@ for epoch in iter_counter.training_epochs():
         iter_counter.record_one_iteration()
 
         try:
-            # Train generator
-            if i % opt.D_steps_per_G == 0:
-                trainer.run_generator_one_step(data_i)
-            # gc.collect()
-            # torch.cuda.empty_cache()
-            # Train discriminator
+            # # Train generator
+            # if i % opt.D_steps_per_G == 0:
+            #     trainer.run_generator_one_step(data_i)
+            # # gc.collect()
+            # # torch.cuda.empty_cache()
+            # # Train discriminator
             # trainer.run_discriminator_one_step(data_i)
+            if i % (opt.G_steps_per_D + 1) != opt.G_steps_per_D:
+                trainer.run_generator_one_step(data_i)
+                if i == 0 or i % opt.D_steps_per_G == 0:
+                    trainer.run_discriminator_one_step(data_i)
+            else:
+                trainer.run_discriminator_one_step(data_i)
 
         except Exception as e:
             print(f"❌ Error in training step: {str(e)}")
