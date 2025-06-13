@@ -157,7 +157,7 @@ class SIANResBlk(nn.Module):
         # print(f"SIANResBlk: in_channels={self.in_channels}, out_channels={self.out_channels}, out_shape={out.shape}")
         if self.upsample:
             out = self.upsampleBlk(out)
-            # print(f"After upsampling: out_shape={out.shape}")
+            print(f"After upsampling: out_shape={out.shape}")
         return out
     
 
