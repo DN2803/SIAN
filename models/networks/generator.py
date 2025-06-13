@@ -102,7 +102,7 @@ class SIANGenerator(BaseNetwork):
             # print(out.shape)
         out = self.final_conv(out)
         # print(out)
-        return out #  torch.tanh(out)
+        return torch.tanh(out)
     def compute_latent_vector_size(self, opt):
         num_up_layer = opt.num_blocks
 
