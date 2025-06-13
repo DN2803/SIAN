@@ -7,7 +7,12 @@ class SIANNorm(nn.Module):
     def __init__(self, in_channels, out_channels, semantic_nc, style_dim, directional_nc, distance_nc):
         super(SIANNorm, self).__init__()
         self.conv_c = in_channels # Cố định số kênh output trung gian
-
+        if in_channels != out_channels:
+            raise ValueError("SIANNorm requires in_channels and out_channels to be the same for now.")
+        
+        if self.conv_c > 256: 
+            self.conv_c = int(self.conv_c ** 0.5)  # rrduce the number of channels if too large ==> reduce parameters # TODO: check if this is needed
+        
         # Semantization
         self.conv1 = nn.Conv2d(semantic_nc, self.conv_c, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(semantic_nc, self.conv_c, kernel_size=3, padding=1)
