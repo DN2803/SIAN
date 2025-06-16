@@ -85,7 +85,8 @@ class Pix2PixModel(torch.nn.Module):
         if opt.no_TTUR:
             G_lr, D_lr = opt.lr, opt.lr
         else:
-            G_lr, D_lr = opt.lr / 2, opt.lr * 2
+            # G_lr, D_lr = opt.lr / 2, opt.lr * 2
+            G_lr, D_lr = opt.lrG, opt.lrD
 
         optimizer_G = torch.optim.Adam(G_params, lr=G_lr, betas=(beta1, beta2))
         optimizer_D = torch.optim.Adam(D_params, lr=D_lr, betas=(beta1, beta2))

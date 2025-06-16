@@ -34,6 +34,8 @@ class TrainOptions(BaseOptions):
             parser.set_defaults(beta1=0.5, beta2=0.999)
 
         parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate for adam')
+        parser.add_argument('--lrG', type=float, default=0.0001, help='initial learning rate for generator. If None, use --lr')
+        parser.add_argument('--lrD', type=float, default=0.00005, help='initial learning rate for discriminator. If None, use --lr')
         parser.add_argument('--D_steps_per_G', type=int, default=1, help='number of discriminator iterations per generator iterations.')
 
         # for discriminators
