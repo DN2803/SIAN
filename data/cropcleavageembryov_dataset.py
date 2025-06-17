@@ -59,6 +59,9 @@ class CropcleavageEmbryovDataset(Pix2pixDataset):
         distance_map = self.resize_map(distance_path)
         direction_map = self.resize_map(direction_path)
         image = np.load(image_path)
+        # ressize ảnh về kích thước chuẩn
+        if self.opt.load_size > 0:
+            image = Image.fromarray(image.astype(np.uint8)).resize((self.opt.load_size, self.opt.load_size))
         image = np.transpose(image, (2, 0, 1))  # chuyển từ (H, W, C) sang (C, H, W)
         image = torch.from_numpy(image).float()  # chuyển sang tensor float
         
