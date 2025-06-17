@@ -46,8 +46,8 @@ class CropcleavageEmbryovDataset(Pix2pixDataset):
             instance_img = self.resize_map(inst_path, False)
             # if instance_img.shape[0] > 1: 
             #     instance_img = sum(instance_img, dim=0, keepdim=True)  # gộp các kênh nếu có nhiều kênh
-        to_tensor = transforms.ToTensor()
-        instance_tensor = to_tensor(instance_img)
+        # to_tensor = transforms.ToTensor()
+        instance_tensor = instance_img#to_tensor(instance_img)
 
         # Load các bản đồ phụ trợ (semantic, direction, distance)
         semantic_path = os.path.join(self.semantic_dir, f'{inst_name}.npy')
