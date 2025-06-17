@@ -7,7 +7,7 @@ import torch
 import torchvision.transforms as transforms
 from data.base_dataset import BaseDataset, get_params, get_transform
 import torch.nn.functional as F
-class CleavageEmbryovDataset(Pix2pixDataset):
+class CropcleavageEmbryovDataset(Pix2pixDataset):
     """
     Dataset dùng cho mô hình SIAN với các đầu vào:
     - instance mask (label)
