@@ -3,6 +3,7 @@ from data.image_folder import make_dataset
 import os
 from PIL import Image
 import numpy as np
+import cv2
 import torch
 import torchvision.transforms as transforms
 from data.base_dataset import BaseDataset, get_params, get_transform
@@ -61,7 +62,7 @@ class CropcleavageEmbryovDataset(Pix2pixDataset):
         image = np.load(image_path)
         # ressize ảnh về kích thước chuẩn
         if self.opt.load_size > 0:
-            image = Image.fromarray(image.astype(np.uint8)).resize((self.opt.load_size, self.opt.load_size))
+            image = cv2.resize(image, (self.opt.load_size, self.opt.load_size), interpolation=cv2.INTER_LINEAR)
         image = np.transpose(image, (2, 0, 1))  # chuyển từ (H, W, C) sang (C, H, W)
         image = torch.from_numpy(image).float()  # chuyển sang tensor float
         
