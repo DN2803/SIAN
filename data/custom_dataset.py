@@ -54,12 +54,13 @@ class CustomDataset(Pix2pixDataset):
         semantic_path = os.path.join(self.semantic_dir, f'{inst_name}.npy')
         direction_path = os.path.join(self.direction_dir, f'{inst_name}.npy')
         distance_path = os.path.join(self.distance_dir, f'{inst_name}.npy')
-        image_path = os.path.join(self.image_dir, f'20230306-2559-5-F0-201.jpg.npy')
+        image_path = os.path.join(self.image_dir, f'{inst_name}.npy')
+        real_path = os.path.join(self.image_dir, f'20230306-2559-5-F0-201.jpg.npy')
 
         semantic_map = self.resize_map(semantic_path, False)
         distance_map = self.resize_map(distance_path)
         direction_map = self.resize_map(direction_path)
-        image = np.load(image_path)
+        image = np.load(real_path)
         image_pil = Image.fromarray(image)
         params = get_params(self.opt, (self.opt.load_size,self.opt.load_size) )
         
